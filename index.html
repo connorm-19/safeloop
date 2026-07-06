@@ -2141,6 +2141,13 @@
     .cost-banner.driver { background: var(--soft-green); }
     .cost-banner.driver .cost-amt { color: var(--green); }
     .cost-banner.rider .cost-amt { color: var(--primary-dark); }
+    .info-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 16px; height: 16px; margin-left: 5px; padding: 0; border: none;
+      border-radius: 50%; background: var(--soft-primary); color: var(--primary);
+      font-size: 11px; font-weight: 700; cursor: pointer; vertical-align: middle;
+      line-height: 1; flex-shrink: 0;
+    }
   </style>
 
   <style id="safeloop-polish-v3">
@@ -3482,6 +3489,17 @@
           </div>
         </div>
 
+        <div class="modal-backdrop" id="carpoolInfoModal">
+          <div class="modal">
+            <div class="modal-head"><h3>Why cost share only?</h3><button class="x-btn" onclick="closeModal('carpoolInfoModal')">×</button></div>
+            <div style="padding:4px 2px">
+              <p class="subtext" style="margin:0 0 10px">In British Columbia, a ride counts as a carpool, not a private driver-for-hire, only when the driver recovers actual trip costs and nothing more.</p>
+              <p class="subtext" style="margin:0 0 10px">That means a driver can be reimbursed for <strong>fuel, insurance, and parking</strong> attributable to the trip, but never a profit or a fare. Charging above cost would make it a commercial passenger service, which requires a special licence.</p>
+              <p class="subtext" style="margin:0">SafeLoop keeps every amount at or below true cost share so your circle stays a legal carpool.</p>
+              <button class="btn btn-primary" style="margin-top:12px" onclick="closeModal('carpoolInfoModal')">Got it</button>
+            </div>
+          </div>
+        </div>
         <div class="modal-backdrop" id="requestRideModal">
           <div class="modal">
             <div class="modal-head">
@@ -3721,7 +3739,7 @@
                 <div class="ride-info-line"><strong>Plate</strong><span>BC · SL 4182</span></div>
                 <div class="ride-info-line"><strong>Route</strong><span>Joyce Elementary → Killarney Field</span></div>
                 <div class="ride-info-line"><strong>Time</strong><span>Pickup 8:55 AM · Arrive 9:20 AM</span></div>
-                <div class="ride-info-line"><strong>Est. reimbursement</strong><span>+$5.80 (9.2 km · fuel + parking)</span></div>
+                <div class="ride-info-line"><strong>Est. reimbursement</strong><span>+$5.80 (9.2 km · fuel + parking) <button class="info-btn" onclick="event.stopPropagation();openModal('carpoolInfoModal')" aria-label="Why cost share only">i</button></span></div>
               </div>
             </div>
             <div class="ride-log-card">
@@ -3734,7 +3752,7 @@
                 <div class="ride-info-line"><strong>Plate</strong><span>BC · SL 4182</span></div>
                 <div class="ride-info-line"><strong>Route</strong><span>Collingwood → Science World</span></div>
                 <div class="ride-info-line"><strong>Time</strong><span>Pickup 9:10 AM · Arrive 9:40 AM</span></div>
-                <div class="ride-info-line"><strong>Est. reimbursement</strong><span>+$4.30 (6.8 km · fuel + parking)</span></div>
+                <div class="ride-info-line"><strong>Est. reimbursement</strong><span>+$4.30 (6.8 km · fuel + parking) <button class="info-btn" onclick="event.stopPropagation();openModal('carpoolInfoModal')" aria-label="Why cost share only">i</button></span></div>
               </div>
             </div>
           </div>
@@ -3750,7 +3768,7 @@
                 <div class="ride-info-line"><strong>Plate</strong><span>BC · AR 2487</span></div>
                 <div class="ride-info-line"><strong>Route</strong><span>School → Renfrew Community Centre</span></div>
                 <div class="ride-info-line"><strong>Time</strong><span>Pickup 4:15 PM · Arrive 4:40 PM</span></div>
-                <div class="ride-info-line"><strong>Est. cost share</strong><span>$3.60 (5.7 km · fuel + parking)</span></div>
+                <div class="ride-info-line"><strong>Est. cost share</strong><span>$3.60 (5.7 km · fuel + parking) <button class="info-btn" onclick="event.stopPropagation();openModal('carpoolInfoModal')" aria-label="Why cost share only">i</button></span></div>
               </div>
             </div>
             <div class="ride-log-card">
@@ -3763,7 +3781,7 @@
                 <div class="ride-info-line"><strong>Plate</strong><span>Shown after driver accepts</span></div>
                 <div class="ride-info-line"><strong>Route</strong><span>Joyce Elementary → Trout Lake Field</span></div>
                 <div class="ride-info-line"><strong>Time</strong><span>Pickup 3:30 PM · Arrive estimate pending</span></div>
-                <div class="ride-info-line"><strong>Est. cost share</strong><span>~$4.20 (est. 6.5 km · confirmed on match)</span></div>
+                <div class="ride-info-line"><strong>Est. cost share</strong><span>~$4.20 (est. 6.5 km · confirmed on match) <button class="info-btn" onclick="event.stopPropagation();openModal('carpoolInfoModal')" aria-label="Why cost share only">i</button></span></div>
               </div>
             </div>
             <div class="ride-log-card">
@@ -3776,7 +3794,7 @@
                 <div class="ride-info-line"><strong>Plate</strong><span>BC · ML 8821</span></div>
                 <div class="ride-info-line"><strong>Route</strong><span>Joyce Elementary → Trout Lake Field</span></div>
                 <div class="ride-info-line"><strong>Time</strong><span>Pickup 3:30 PM · Arrive 3:52 PM</span></div>
-                <div class="ride-info-line"><strong>Est. cost share</strong><span>$4.20 (6.5 km · fuel + parking)</span></div>
+                <div class="ride-info-line"><strong>Est. cost share</strong><span>$4.20 (6.5 km · fuel + parking) <button class="info-btn" onclick="event.stopPropagation();openModal('carpoolInfoModal')" aria-label="Why cost share only">i</button></span></div>
               </div>
             </div>
           </div>
@@ -3929,7 +3947,7 @@
               <div class="safe-item"><span class="dot-check">✓</span><span>Live location active</span></div>
               <div class="safe-item"><span class="dot-check">✓</span><span>Estimated arrival: 3:52 PM</span></div>
             </div>
-            <div class="cost-banner rider"><span><strong>You reimburse Angela</strong><span class="cost-sub">6.5 km · fuel + parking, cost share only</span></span><strong class="cost-amt">$4.20</strong></div>
+            <div class="cost-banner rider"><span><strong>You reimburse Angela</strong><span class="cost-sub">6.5 km · fuel + parking, cost share only</span></span><strong class="cost-amt">$4.20</strong><button class="info-btn" onclick="event.stopPropagation();openModal('carpoolInfoModal')" aria-label="Why cost share only">i</button></div>
           </div>
 
           <div class="btn-row">
@@ -3999,7 +4017,7 @@
               <strong>Destination</strong>
               <span>Killarney Field · Estimated arrival 9:20 AM</span>
             </div>
-            <div class="cost-banner driver"><span><strong>You are reimbursed</strong><span class="cost-sub">9.2 km · fuel + parking, split across 2 riders</span></span><strong class="cost-amt">+$5.80</strong></div>
+            <div class="cost-banner driver"><span><strong>You are reimbursed</strong><span class="cost-sub">9.2 km · fuel + parking, split across 2 riders</span></span><strong class="cost-amt">+$5.80</strong><button class="info-btn" onclick="event.stopPropagation();openModal('carpoolInfoModal')" aria-label="Why cost share only">i</button></div>
           </div>
 
           <button class="btn btn-primary" style="margin-top:12px" onclick="showScreen('tripSummary')">End trip</button>
@@ -4071,7 +4089,7 @@
           </div>
           <div class="card">
             <h3 style="margin:0 0 8px">Ride receipt</h3>
-            <div class="fare-note"><strong>Cost-share rule:</strong> ride distance is split at <strong>$0.63/km</strong> for fuel and parking, shared equally between all riders. Not a fare.</div>
+            <div class="fare-note"><strong>Cost-share rule:</strong><button class="info-btn" onclick="event.stopPropagation();openModal('carpoolInfoModal')" aria-label="Why cost share only">i</button> ride distance is split at <strong>$0.63/km</strong> for fuel and parking, shared equally between all riders. Not a fare.</div>
             <div class="receipt-row"><span>Route distance<span class="receipt-subline">Joyce Elementary → Trout Lake Field</span></span><span>6.7 km</span></div>
             <div class="receipt-row"><span>Fuel cost share<span class="receipt-subline">6.7 km × $0.63/km</span></span><span>$4.22</span></div>
             <div class="receipt-row"><span>Your share<span class="receipt-subline">$4.22 split between 2 riders</span></span><span>$2.11</span></div>
