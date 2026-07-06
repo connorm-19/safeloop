@@ -4345,8 +4345,8 @@
       const modal = document.getElementById(id);
       if (modal) {
         modal.classList.add('visible');
-        initializeCalendars();
-        updateReimbursement();
+        try { initializeCalendars(); } catch (e) {}
+        try { updateReimbursement(); } catch (e) {}
       }
     }
 
