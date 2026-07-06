@@ -1,0 +1,4521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeLoop Prototype v5</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #182033;
+      --muted: #6b7280;
+      --line: #e4e7ef;
+      --primary: #3157d5;
+      --primary-dark: #2444ad;
+      --soft-primary: #e9eeff;
+      --green: #168a5f;
+      --soft-green: #e7f6ef;
+      --orange: #bd6b00;
+      --soft-orange: #fff1da;
+      --red: #bb2f42;
+      --soft-red: #ffe8ec;
+      --shadow: 0 18px 45px rgba(20, 29, 55, 0.13);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #dde6ff 0, #f4f6fb 42%, #eef2f9 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px;
+    }
+
+    .prototype-shell {
+      width: 100%;
+      max-width: 1180px;
+      display: grid;
+      grid-template-columns: minmax(360px, 430px);
+      justify-content: center;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .brief, .notes {
+      background: rgba(255,255,255,0.74);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 24px;
+    }
+
+    .brief h1 {
+      margin: 0 0 10px;
+      font-size: 28px;
+      line-height: 1.05;
+      letter-spacing: -0.7px;
+    }
+
+    .brief p, .notes p, .notes li {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.48;
+    }
+
+    .tagline {
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: var(--soft-primary);
+      color: var(--primary-dark) !important;
+      font-weight: 650;
+      margin: 16px 0;
+    }
+
+    .insight-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      margin-top: 12px;
+      background: #fff;
+    }
+
+    .insight-card strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .phone {
+      width: 390px;
+      height: 844px;
+      max-width: 390px;
+      background: #10172a;
+      border-radius: 44px;
+      padding: 12px;
+      box-shadow: 0 30px 80px rgba(10, 17, 35, 0.32);
+      position: sticky;
+      top: 24px;
+    }
+
+    .screen {
+      background: var(--bg);
+      height: 820px;
+      border-radius: 34px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      display: none;
+      scrollbar-width: none;
+    }
+
+    .screen::-webkit-scrollbar { display: none; }
+
+    .screen.active { display: block; }
+
+    .status-bar {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+      background: rgba(255,255,255,0.72);
+    }
+
+    .status-icons {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .pill-icon {
+      width: 18px;
+      height: 8px;
+      border-radius: 999px;
+      border: 1.5px solid #0f172a;
+      position: relative;
+    }
+
+    .pill-icon::after {
+      content: "";
+      position: absolute;
+      right: 2px;
+      top: 1.5px;
+      width: 7px;
+      height: 3px;
+      border-radius: 8px;
+      background: #0f172a;
+    }
+
+    .app-header {
+      padding: 18px 22px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #3157d5, #86a0ff);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+      box-shadow: 0 10px 25px rgba(49,87,213,0.35);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #d9e2ff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: var(--primary-dark);
+      border: 2px solid white;
+    }
+
+    button.avatar {
+      font-family: inherit;
+      cursor: pointer;
+      padding: 0;
+      box-shadow: 0 8px 18px rgba(20,29,55,.08);
+    }
+
+    .content {
+      padding: 0 20px 28px;
+    }
+
+    .hero {
+      padding: 26px 22px 18px;
+    }
+
+    .hero-card {
+      background: linear-gradient(145deg, #172342, #3157d5 70%, #87a0ff);
+      border-radius: 28px;
+      padding: 28px;
+      color: white;
+      min-height: 285px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 20px 45px rgba(49,87,213,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.13);
+      right: -78px;
+      top: -56px;
+    }
+
+    .hero-card h2 {
+      font-size: 32px;
+      line-height: 1.05;
+      margin: 0 0 12px;
+      letter-spacing: -0.8px;
+      position: relative;
+    }
+
+    .hero-card p {
+      margin: 0;
+      color: rgba(255,255,255,0.84);
+      font-size: 15px;
+      line-height: 1.45;
+      position: relative;
+    }
+
+    .trust-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      position: relative;
+      margin-top: 18px;
+    }
+
+    .mini-chip {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      backdrop-filter: blur(10px);
+    }
+
+    h2.page-title {
+      margin: 10px 0 6px;
+      font-size: 26px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtext {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .btn {
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      padding: 15px 16px;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 12px 28px rgba(49,87,213,0.28);
+    }
+
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--primary);
+      padding: 12px;
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .form-card, .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: 0 10px 24px rgba(20, 29, 55, 0.06);
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 800;
+      color: #374151;
+      margin-bottom: 7px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 13px 12px;
+      font: inherit;
+      background: #fbfcff;
+      color: var(--text);
+      outline: none;
+      margin-bottom: 13px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #8aa0ff;
+      box-shadow: 0 0 0 3px rgba(49,87,213,0.12);
+    }
+
+    .check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 6px 0 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .check-row input {
+      width: auto;
+      margin: 2px 0 0;
+    }
+
+    .child-preview {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border-radius: 16px;
+      background: var(--soft-green);
+      color: var(--green);
+      font-weight: 800;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+
+    .child-preview.visible { display: flex; }
+
+    .choice-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: transform .15s ease, border .15s ease;
+    }
+
+    .choice-card:hover {
+      transform: translateY(-2px);
+      border-color: #9aacff;
+    }
+
+    .choice-card h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .choice-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .circle-top {
+      margin: 12px 0 16px;
+      background: linear-gradient(160deg, #0e5a72, #0b4357);
+      border: 1px solid rgba(3, 43, 58, .35);
+      border-radius: 22px;
+      padding: 10px;
+      box-shadow: 0 16px 36px rgba(20,29,55,.16);
+    }
+
+    .circle-accordion {
+      display: grid;
+      gap: 8px;
+    }
+
+    .accordion-item {
+      border: 1px solid rgba(0,0,0,.24);
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(255,255,255,.08);
+    }
+
+    .accordion-trigger {
+      appearance: none;
+      width: 100%;
+      border: 0;
+      padding: 12px 14px;
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.92);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .accordion-trigger strong {
+      display: block;
+      font-size: 15px;
+      letter-spacing: -.15px;
+    }
+
+    .accordion-trigger span {
+      display: block;
+      margin-top: 3px;
+      font-size: 11px;
+      font-weight: 750;
+      color: rgba(255,255,255,.68);
+    }
+
+    .accordion-trigger b {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.15);
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .accordion-item.open .accordion-trigger {
+      background: #f8fbff;
+      color: #102033;
+    }
+
+    .accordion-item.open .accordion-trigger span {
+      color: var(--muted);
+    }
+
+    .accordion-item.open .accordion-trigger b {
+      background: var(--soft-primary);
+      color: var(--primary-dark);
+    }
+
+    .accordion-panel {
+      display: none;
+      padding: 0 10px 10px;
+    }
+
+    .accordion-item.open .accordion-panel { display: block; }
+
+    .schedule-list {
+      display: grid;
+      gap: 8px;
+      margin: 10px 0 14px;
+    }
+
+    .schedule-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      background: #f8fafc;
+    }
+
+    .schedule-row strong {
+      display: block;
+      font-size: 12px;
+    }
+
+    .schedule-row span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.25;
+    }
+
+    .circle-inner-card {
+      background: rgba(255,255,255,.97);
+      border: 1px solid rgba(255,255,255,.88);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    .circle-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .circle-title-row h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -0.45px;
+    }
+
+    .circle-title-row .subtext {
+      font-size: 13px;
+    }
+
+    .member-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      margin: 6px 0 14px;
+    }
+
+    .member-button {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 900;
+      padding: 12px 11px;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(20,29,55,.08);
+      min-width: 96px;
+      font-family: inherit;
+      text-align: center;
+      line-height: 1.15;
+    }
+
+    .member-button:hover { transform: translateY(-1px); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 11px;
+      font-weight: 900;
+      background: var(--soft-green);
+      color: var(--green);
+      white-space: nowrap;
+    }
+
+    .parent-stack {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 14px;
+      min-width: 0;
+      flex-wrap: nowrap;
+    }
+
+    .member-row .parent-stack { margin-bottom: 0; }
+
+    .mini-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      border: 3px solid white;
+      box-shadow: 0 4px 12px rgba(20,29,55,.12);
+      background: #dce5ff;
+      color: #2444ad;
+    }
+
+    .mini-avatar.green { background: #cef5e7; color: #096b47; }
+    .mini-avatar.orange { background: #ffe3ba; color: #9a5200; }
+    .mini-avatar.pink { background: #ffe1eb; color: #a5244a; }
+    .mini-avatar.gray { background: #e8eaf0; color: #4b5563; }
+    .mini-avatar.more { background: #eef2ff; color: var(--primary-dark); font-size: 13px; }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .action-tile {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 18px;
+      padding: 14px;
+      cursor: pointer;
+      min-height: 92px;
+      transition: transform .15s ease;
+    }
+
+    .action-tile:hover { transform: translateY(-2px); }
+
+    .action-tile strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+
+    .action-tile span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .action-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: var(--soft-primary);
+      color: var(--primary-dark);
+      font-size: 15px;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+
+    .mini-calendar {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fff;
+      margin-bottom: 16px;
+    }
+
+    .mini-calendar-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: linear-gradient(145deg, #0f5f79, #12718f);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .cal-nav {
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      color: #fff;
+      width: 30px;
+      height: 30px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: #e7ebf2;
+      padding: 1px;
+    }
+
+    .calendar-day-name, .calendar-cell {
+      background: #fff;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .calendar-day-name {
+      min-height: 24px;
+      color: var(--muted);
+      background: #f7f8fc;
+    }
+
+    .calendar-cell {
+      border: 0;
+      font-family: inherit;
+      flex-direction: column;
+      gap: 2px;
+      color: #0f172a;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .calendar-cell.today::after {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      pointer-events: none;
+    }
+
+    .calendar-cell.muted { color: #b3bac8; background:#f5f6fa; }
+    .calendar-cell.closed { background: #d8dbe3; color:#6b7280; }
+    .calendar-cell.practice { background: #edf7ff; color:#0f5f79; }
+    .calendar-cell.selected { background: #10172a; color:#fff; }
+    .calendar-cell.holiday { outline: 2px solid #f47c8a; outline-offset: -2px; }
+
+    .calendar-cell small {
+      font-size: 8px;
+      font-weight: 750;
+      line-height: 1;
+    }
+
+    .legend-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      margin: -6px 0 14px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: -1px;
+    }
+
+    .dot-practice { background: #edf7ff; border:1px solid #aed8ef; }
+    .dot-closed { background: #d8dbe3; }
+    .dot-selected { background: #10172a; }
+    .dot-holiday { background: #ffe8ec; border:1px solid #f47c8a; }
+
+    .soft-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .soft-row strong { display:block; font-size:13px; }
+    .soft-row span { color:var(--muted); font-size:12px; line-height:1.35; }
+
+    .toggle-pill {
+      border-radius: 999px;
+      border: 0;
+      background: var(--soft-primary);
+      color: var(--primary-dark);
+      font-weight: 900;
+      font-size: 11px;
+      padding: 7px 10px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 22px 0 10px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .section-title button {
+      border: 0;
+      background: transparent;
+      color: var(--primary);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .ride-item {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 15px;
+      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: 64px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 9px 18px rgba(20,29,55,.05);
+    }
+
+    .driver-circle {
+      position: relative;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--soft-primary);
+      color: var(--primary-dark);
+      font-size: 20px;
+      font-weight: 900;
+      border: 3px solid white;
+      box-shadow: 0 4px 12px rgba(20,29,55,.1);
+    }
+
+    .rider-dots {
+      position: absolute;
+      right: -6px;
+      bottom: -4px;
+      display: flex;
+    }
+
+    .rider-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fff1da;
+      border: 2px solid #fff;
+      display: grid;
+      place-items: center;
+      font-size: 9px;
+      font-weight: 900;
+      color: #9a5200;
+      margin-left: -5px;
+    }
+
+    .ride-meta strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .ride-meta span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .ride-status {
+      font-size: 11px;
+      font-weight: 900;
+      padding: 7px 9px;
+      border-radius: 999px;
+      background: var(--soft-orange);
+      color: var(--orange);
+      white-space: nowrap;
+    }
+
+    .ride-status.green {
+      background: var(--soft-green);
+      color: var(--green);
+    }
+
+    .ride-status.red {
+      background: var(--soft-red);
+      color: var(--red);
+    }
+
+    .bottom-nav {
+      position: sticky;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      height: 74px;
+      margin: 18px 14px 14px;
+      background: rgba(255,255,255,0.93);
+      border: 1px solid rgba(228,231,239,0.9);
+      border-radius: 24px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 8px;
+      box-shadow: 0 16px 30px rgba(20,29,55,.14);
+      backdrop-filter: blur(15px);
+      z-index: 20;
+    }
+
+    .nav-btn {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 11px;
+      cursor: pointer;
+      border-radius: 17px;
+    }
+
+    .nav-btn.active {
+      background: var(--soft-primary);
+      color: var(--primary-dark);
+    }
+
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15,23,42,.36);
+      backdrop-filter: blur(5px);
+      z-index: 30;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.visible .modal {
+      max-height: calc(100% - 72px);
+      overflow-y: auto;
+      border-radius: 24px;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 8px;
+    }
+    .modal-backdrop { padding: 36px 20px; }
+
+    .modal-backdrop.visible { display: flex; }
+
+    .modal {
+      width: 100%;
+      background: #fff;
+      border-radius: 28px 28px 34px 34px;
+      padding: 18px 22px 26px;
+      max-height: 88%;
+      overflow: auto;
+      box-shadow: 0 -20px 40px rgba(20,29,55,.22);
+      animation: slideUp .18s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0.7; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .modal-head h3 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .x-btn {
+      border: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #f1f3f8;
+      color: #374151;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .map-card {
+      height: 260px;
+      border-radius: 28px;
+      background:
+        linear-gradient(90deg, transparent 49%, rgba(255,255,255,.8) 50%, transparent 51%) 0 0 / 66px 66px,
+        linear-gradient(0deg, transparent 49%, rgba(255,255,255,.8) 50%, transparent 51%) 0 0 / 66px 66px,
+        #dde8f7;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid white;
+      box-shadow: inset 0 0 0 1px rgba(49,87,213,.08);
+      margin-bottom: 14px;
+    }
+
+    .route-line {
+      position: absolute;
+      width: 240px;
+      height: 100px;
+      left: 58px;
+      top: 88px;
+      border-top: 6px solid rgba(49,87,213,.7);
+      border-right: 6px solid rgba(49,87,213,.7);
+      border-radius: 0 42px 0 0;
+    }
+
+    .map-pin {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      border-radius: 50% 50% 50% 4px;
+      transform: rotate(-45deg);
+      background: var(--primary);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 8px 16px rgba(49,87,213,.35);
+    }
+
+    .map-pin::after {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: white;
+    }
+
+    .pin-start { left: 46px; top: 78px; background: var(--green); }
+    .pin-end { right: 54px; bottom: 62px; background: var(--red); }
+
+    .car-dot {
+      position: absolute;
+      left: 176px;
+      top: 82px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #111827;
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 900;
+      border: 4px solid white;
+      box-shadow: 0 10px 20px rgba(20,29,55,.28);
+      animation: pulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .ride-detail-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 9px 18px rgba(20,29,55,.05);
+    }
+
+    .driver-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .driver-row h3 {
+      margin: 0 0 4px;
+      font-size: 17px;
+    }
+
+    .driver-row p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .safe-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .safe-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 13px;
+      color: #374151;
+    }
+
+    .dot-check {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--soft-green);
+      color: var(--green);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .receipt-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+    }
+
+    .receipt-row:last-child { border-bottom: 0; }
+    .receipt-row strong { font-size: 16px; }
+
+    .progress-wrap {
+      margin: 16px 0 5px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .progress {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: #e7ebf3;
+      overflow: hidden;
+    }
+
+    .progress > div {
+      height: 100%;
+      width: 72%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #3157d5, #16a06a);
+    }
+
+
+
+    .profile-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15,23,42,.32);
+      z-index: 50;
+      display: none;
+      justify-content: flex-end;
+      backdrop-filter: blur(4px);
+    }
+
+    .profile-backdrop.visible { display: flex; }
+
+    .profile-sidebar {
+      width: 82%;
+      max-width: 320px;
+      height: 100%;
+      background: #fff;
+      border-radius: 28px 0 0 28px;
+      padding: 22px;
+      box-shadow: -18px 0 36px rgba(20,29,55,.2);
+      overflow-y: auto;
+      animation: slideIn .18s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(26px); opacity: .75; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .profile-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .profile-card-main {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 16px;
+      background: #f8fafc;
+      margin-bottom: 14px;
+    }
+
+    .profile-card-main h3 { margin: 10px 0 4px; }
+    .profile-card-main p { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .profile-detail {
+      display: grid;
+      gap: 3px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .profile-detail span { color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
+    .profile-detail strong { font-size: 14px; }
+
+    .fare-note {
+      border: 1px solid #d7e6ff;
+      border-radius: 18px;
+      padding: 12px;
+      background: #f3f7ff;
+      color: #1f3f83;
+      font-size: 13px;
+      line-height: 1.4;
+      margin: 12px 0;
+    }
+
+    .receipt-subline {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    .notes h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      letter-spacing: -0.4px;
+    }
+
+    .notes ul {
+      padding-left: 18px;
+      margin: 12px 0 0;
+    }
+
+    .flow-step {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .flow-step:last-child { border-bottom: 0; }
+
+    .step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 9px;
+      background: var(--soft-primary);
+      color: var(--primary-dark);
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .flow-step strong {
+      font-size: 13px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .flow-step span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .prototype-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .small-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .small-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 1080px) {
+      .prototype-shell {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+      }
+      .brief, .notes, .phone { position: static; }
+      .notes { order: 3; }
+      .phone { order: 2; }
+      .brief { order: 1; }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 0; background: #10172a; }
+      .prototype-shell { display: block; max-width: none; }
+      .brief, .notes { display: none; }
+      .phone {
+        width: 100vw;
+        height: 100vh;
+        max-width: none;
+        border-radius: 0;
+        padding: 0;
+        box-shadow: none;
+      }
+      .screen {
+        height: 100vh;
+        border-radius: 0;
+      }
+    }
+
+    /* v5 signup flow, drawer tabs, and circle polish */
+    .step-indicator {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin: 8px 0 18px;
+    }
+
+    .step-pill {
+      height: 7px;
+      border-radius: 999px;
+      background: #dfe6f6;
+    }
+
+    .step-pill.active { background: var(--primary); }
+    .step-pill.done { background: #95a7ee; }
+
+    .form-hint {
+      margin: -4px 0 14px;
+      padding: 12px 13px;
+      border-radius: 16px;
+      background: #f3f7ff;
+      color: #34518f;
+      border: 1px solid #dce7ff;
+      font-size: 12.5px;
+      line-height: 1.4;
+      font-weight: 700;
+    }
+
+    .warning-note {
+      margin: 0 0 14px;
+      padding: 12px 13px;
+      border-radius: 16px;
+      background: #fff8ea;
+      color: #8a5200;
+      border: 1px solid #ffe2ad;
+      font-size: 12.5px;
+      line-height: 1.4;
+      font-weight: 750;
+    }
+
+    .upload-card {
+      border: 1px dashed #bfcaf1;
+      border-radius: 16px;
+      background: #f8faff;
+      padding: 12px;
+      margin-bottom: 12px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .upload-card strong { display:block; font-size: 13px; margin-bottom: 3px; }
+    .upload-card span { color: var(--muted); font-size: 12px; }
+
+    .mini-upload-btn {
+      border: 0;
+      border-radius: 999px;
+      background: var(--soft-primary);
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 900;
+      padding: 9px 11px;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .child-added-card {
+      border: 1px solid #d8eadf;
+      border-radius: 18px;
+      padding: 13px;
+      background: #f3fbf7;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .child-added-card strong { display:block; font-size: 14px; margin-bottom: 3px; }
+    .child-added-card span { color: var(--muted); font-size: 12px; }
+
+    .circle-section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 18px 0 10px;
+    }
+
+    .circle-section-head h3 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -.35px;
+    }
+
+    .circle-section-head button {
+      border: 0;
+      background: var(--soft-primary);
+      color: var(--primary-dark);
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-weight: 900;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .circle-search {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 0 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 18px rgba(17,24,39,.045);
+    }
+
+    .circle-search span {
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .circle-search input {
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      margin: 0;
+      padding: 13px 0;
+      font-size: 13px;
+    }
+
+    .circle-search input:focus { box-shadow: none; border: 0; }
+
+    .drawer-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: #f1f4fb;
+      border-radius: 18px;
+      padding: 5px;
+      margin: 0 0 16px;
+    }
+
+    .drawer-tab {
+      border: 0;
+      border-radius: 14px;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 4px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .drawer-tab.active {
+      background: #fff;
+      color: var(--primary-dark);
+      box-shadow: 0 6px 12px rgba(17,24,39,.06);
+    }
+
+    .drawer-panel { display: none; }
+    .drawer-panel.active { display: block; }
+
+    .drawer-list-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 13px;
+      background: #fff;
+      margin-bottom: 10px;
+    }
+
+    .drawer-list-card strong { display:block; font-size: 14px; margin-bottom: 3px; }
+    .drawer-list-card span { color: var(--muted); font-size: 12px; line-height:1.35; }
+
+    .home-only-spacer { height: 10px; }
+
+
+    .btn-subtle {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--primary-dark);
+      padding: 6px 0 2px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 850;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .btn-subtle .plus-pill {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: var(--soft-primary);
+      color: var(--primary-dark);
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .field-stack { display: grid; gap: 10px; margin-bottom: 14px; }
+
+    .invite-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+
+    .invite-row input { margin-bottom: 0; }
+
+    .icon-action-btn, .link-pill {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 14px;
+      padding: 13px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(17,24,39,.05);
+    }
+
+    .inline-action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .contact-chip-list { display: grid; gap: 10px; margin-bottom: 14px; }
+
+    .contact-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      background: #f8fbff;
+      border: 1px solid #d9e6ff;
+      border-radius: 16px;
+    }
+
+    .contact-chip strong { display: block; font-size: 14px; }
+    .contact-chip span { color: var(--muted); font-size: 12px; }
+
+    .contact-chip button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 0 2px;
+      line-height: 1;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fbfcff;
+      margin-bottom: 14px;
+    }
+
+    .toggle-copy strong { display: block; font-size: 14px; margin-bottom: 4px; }
+    .toggle-copy span { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; }
+
+    .switch {
+      position: relative;
+      width: 52px;
+      height: 30px;
+      flex: 0 0 auto;
+      display: inline-block;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .switch .slider {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: #d7dfef;
+      transition: .2s ease;
+    }
+
+    .switch .slider::before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 4px;
+      top: 4px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(17,24,39,.12);
+      transition: .2s ease;
+    }
+
+    .switch input:checked + .slider {
+      background: linear-gradient(145deg, #3157d5, #6a8fff);
+    }
+
+    .switch input:checked + .slider::before { transform: translateX(22px); }
+
+    .recommendation-list { display: grid; gap: 12px; margin-top: 8px; }
+
+    .recommendation-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 10px 20px rgba(17,24,39,.05);
+    }
+
+    .recommendation-card strong { display: block; font-size: 15px; margin-bottom: 4px; }
+    .recommendation-card span { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
+
+    .mini-link {
+      border: 0;
+      background: transparent;
+      color: var(--primary-dark);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .ride-section { margin-top: 18px; }
+
+    .section-head-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .section-head-row h3 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: -.3px;
+    }
+
+    .section-head-row .mini-link { font-size: 12px; }
+
+
+    .badge-hero-card {
+      display: grid;
+      grid-template-columns: auto minmax(0,1fr) auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .badge-medal {
+      width: 68px;
+      height: 68px;
+      border-radius: 22px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #fff1c8, #f6b94f);
+      box-shadow: 0 12px 24px rgba(189,107,0,.18);
+      font-size: 30px;
+    }
+
+    .badge-copy h3 { margin: 0 0 4px; }
+    .badge-copy p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
+
+    .rules-card h3 {
+      margin: 0 0 6px;
+      font-size: 17px;
+      letter-spacing: -.2px;
+    }
+
+    .contact-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #fbfcff;
+      margin-top: 14px;
+    }
+
+    .contact-strip strong { display:block; margin-bottom:4px; }
+    .contact-strip span { color: var(--muted); font-size: 13px; line-height: 1.35; display:block; }
+
+
+    .btn-danger-subtle {
+      width: 100%;
+      border: 1px solid #f3c9cf;
+      background: #fff5f6;
+      color: var(--red);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 850;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .btn-danger-subtle.hidden { display: none !important; }
+
+    .finish-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 14px;
+    }
+
+    .finish-row .btn {
+      width: auto;
+      min-width: 128px;
+      padding-inline: 24px;
+    }
+
+    .recommendation-card.joined {
+      border-color: #cfe8db;
+      background: #f3fbf7;
+    }
+
+    .joined-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+      background: #e7f6ef;
+      border-radius: 999px;
+      padding: 8px 12px;
+    }
+
+    .ride-log-card {
+      background: rgba(255,255,255,.94);
+      border: 1px solid rgba(230,234,242,.96);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 10px 22px rgba(17,24,39,.06);
+      margin-bottom: 12px;
+    }
+
+    .ride-log-card h4 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      letter-spacing: -.25px;
+    }
+
+    .ride-log-card .label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .ride-log-card .label-row .category-label { margin-right: auto; }
+
+    .ride-info-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .ride-info-line {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    .ride-info-line strong {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 800;
+      min-width: 96px;
+    }
+
+    .success-modal-body {
+      text-align: center;
+      padding-top: 8px;
+    }
+
+    .success-badge-emoji {
+      width: 66px;
+      height: 66px;
+      border-radius: 20px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 14px;
+      background: linear-gradient(145deg, #e7f7ef, #c8f1dd);
+      font-size: 32px;
+    }
+
+    .ongoing-subtitle {
+      display: block;
+      margin-top: 6px;
+      color: rgba(255,255,255,.82);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+
+    .child-list {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .child-added-card {
+      position: relative;
+      padding-right: 48px;
+    }
+
+    .child-delete-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      border: 0;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--red);
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(17,24,39,.08);
+    }
+
+    .filter-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 5px;
+      background: #edf2fb;
+      border-radius: 18px;
+      margin: 12px 0 16px;
+      border: 1px solid rgba(215,224,240,.95);
+    }
+
+    .filter-tab {
+      border: 0;
+      border-radius: 14px;
+      padding: 11px 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .filter-tab.active {
+      background: #fff;
+      color: var(--primary-dark);
+      box-shadow: 0 8px 16px rgba(17,24,39,.07);
+    }
+
+    .ride-filter-panel { display: none; }
+    .ride-filter-panel.active { display: block; }
+
+    .pickup-order-list {
+      display: grid;
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .pickup-step-card {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 10px 22px rgba(17,24,39,.06);
+      opacity: .66;
+    }
+
+    .pickup-step-card.active {
+      opacity: 1;
+      border-color: #aebeff;
+      background: linear-gradient(180deg, #ffffff, #f4f7ff);
+      box-shadow: 0 14px 28px rgba(49,87,213,.12);
+    }
+
+    .pickup-step-card.done {
+      opacity: .92;
+      background: #f3fbf7;
+      border-color: #cfebdb;
+    }
+
+    .pickup-num {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--soft-primary);
+      color: var(--primary-dark);
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    .pickup-step-card.done .pickup-num {
+      background: var(--soft-green);
+      color: var(--green);
+    }
+
+    .pickup-step-card h4 {
+      margin: 0 0 4px;
+      font-size: 16px;
+      letter-spacing: -.2px;
+    }
+
+    .pickup-step-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+
+    .pickup-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .pickup-actions .mini-action {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 13px;
+      padding: 10px 8px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .pickup-actions .mini-action.primary {
+      grid-column: 1 / -1;
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .pickup-step-card:not(.active) .pickup-actions { display: none; }
+
+    .destination-card {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      background: #f8fbff;
+      border: 1px solid var(--line);
+    }
+
+    .destination-card strong { display:block; margin-bottom:4px; }
+    .destination-card span { color: var(--muted); font-size: 13px; line-height:1.4; display:block; }
+
+
+    .ride-card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .ride-card-actions .mini-action {
+      width: 100%;
+      text-align: center;
+    }
+
+    .summary-metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .summary-metric {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fbfcff;
+      padding: 14px;
+    }
+
+    .summary-metric strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    .summary-metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .route-summary-box {
+      border: 1px solid #dce7ff;
+      border-radius: 18px;
+      background: #f5f8ff;
+      padding: 14px;
+      margin: 12px 0;
+    }
+
+    .route-summary-box strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .route-summary-box span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .reimbursement-note {
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: #fff8e9;
+      border: 1px solid #ffe4b4;
+      color: #8b4b00;
+      font-size: 13px;
+      line-height: 1.4;
+      margin: 10px 0 14px;
+    }
+
+  
+    /* isolation + overflow guard */
+    .prototype-shell { max-width: 460px; }
+    .phone { position: static; }
+    .screen, .card, .receipt-row, .profile-detail, .summary-metric,
+    .flow-step, .modal, .insight-card, .reimbursement-note, .fare-note {
+      overflow-wrap: anywhere; word-break: break-word;
+    }
+    .receipt-row, .profile-detail, .section-title, .section-head-row {
+      gap: 10px;
+    }
+    .receipt-row > span, .profile-detail > span { min-width: 0; }
+
+    .cost-banner {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      margin-top: 12px; padding: 12px 14px; border-radius: 14px;
+      background: var(--soft-primary); color: var(--text);
+    }
+    .cost-banner .cost-sub { display: block; font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+    .cost-banner .cost-amt { font-size: 18px; white-space: nowrap; }
+    .cost-banner.driver { background: var(--soft-green); }
+    .cost-banner.driver .cost-amt { color: var(--green); }
+    .cost-banner.rider .cost-amt { color: var(--primary-dark); }
+  </style>
+
+  <style id="safeloop-polish-v3">
+    :root {
+      --bg: #f7f8fb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #667085;
+      --line: #e6eaf2;
+      --primary: #2754d8;
+      --primary-dark: #173b9f;
+      --soft-primary: #edf2ff;
+      --green: #0f8a67;
+      --soft-green: #e7f7f1;
+      --orange: #b45f06;
+      --soft-orange: #fff4df;
+      --red: #b4233a;
+      --soft-red: #ffedf1;
+      --navy: #111827;
+      --teal: #0f766e;
+      --shadow: 0 18px 40px rgba(17, 24, 39, .10);
+      --shadow-soft: 0 8px 22px rgba(17, 24, 39, .07);
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 18% -6%, rgba(75, 119, 255, .23), transparent 32%),
+        radial-gradient(circle at 90% 8%, rgba(20, 184, 166, .16), transparent 28%),
+        linear-gradient(135deg, #f6f8fc 0%, #eef2f7 100%);
+      color: var(--text);
+    }
+
+    .brief, .notes {
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(255,255,255,.9);
+      box-shadow: 0 22px 70px rgba(17,24,39,.10);
+    }
+
+    .phone {
+      width: 393px;
+      height: 852px;
+      max-width: 393px;
+      border-radius: 48px;
+      padding: 11px;
+      background: #0b1220;
+      box-shadow: 0 34px 90px rgba(15,23,42,.34), inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+
+    .screen {
+      height: 830px;
+      border-radius: 37px;
+      background:
+        radial-gradient(circle at top left, rgba(231,239,255,.95), transparent 28%),
+        linear-gradient(180deg, #fbfcff 0%, #f5f7fb 44%, #eef2f7 100%);
+      scroll-behavior: smooth;
+    }
+
+    .status-bar {
+      height: 44px;
+      padding: 0 24px;
+      background: rgba(255,255,255,.78);
+      backdrop-filter: blur(18px);
+      letter-spacing: -.15px;
+    }
+
+    .app-header {
+      padding: 15px 20px 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: linear-gradient(180deg, rgba(251,252,255,.94), rgba(251,252,255,.72));
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(230,234,242,.72);
+    }
+
+    .brand { gap: 11px; font-size: 18px; letter-spacing: -.45px; }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 15px;
+      background: linear-gradient(145deg, #1d4ed8 0%, #4f7cff 52%, #8ce0cc 100%);
+      box-shadow: 0 13px 28px rgba(39,84,216,.28);
+    }
+
+    .avatar, button.avatar {
+      background: linear-gradient(145deg, #eef3ff, #dfe8ff);
+      color: var(--primary-dark);
+      box-shadow: 0 9px 20px rgba(17,24,39,.09);
+      width: 40px;
+      height: 40px;
+      flex: 0 0 40px;
+      font-size: 14px;
+    }
+    .drawer-profile .avatar { width: 56px; height: 56px; flex-basis: 56px; }
+    .drawer-avatar { width: 56px !important; height: 56px !important; flex-basis: 56px !important; font-size: 18px !important; }
+
+    .content { padding: 14px 18px 28px; }
+
+    h2.page-title {
+      margin-top: 12px;
+      font-size: 25px;
+      letter-spacing: -.65px;
+    }
+
+    .subtext { color: #667085; }
+
+    .card, .form-card, .choice-card, .ride-detail-card {
+      border-color: rgba(230,234,242,.92);
+      border-radius: 24px;
+      box-shadow: var(--shadow-soft);
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero { padding: 22px 20px 14px; }
+
+    .hero-card {
+      min-height: 300px;
+      border-radius: 31px;
+      background:
+        radial-gradient(circle at 75% 5%, rgba(140,224,204,.35), transparent 34%),
+        linear-gradient(145deg, #0f172a 0%, #1e3a8a 53%, #2754d8 100%);
+      box-shadow: 0 24px 55px rgba(39,84,216,.24);
+    }
+
+    .hero-card::after {
+      content:"";
+      position:absolute;
+      inset: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 24px;
+      pointer-events:none;
+    }
+
+    .btn {
+      border-radius: 18px;
+      letter-spacing: -.1px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(145deg, #2754d8, #1743bb);
+      box-shadow: 0 14px 30px rgba(39,84,216,.24);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(210,218,232,.9);
+      box-shadow: 0 8px 16px rgba(17,24,39,.04);
+    }
+
+    input, select, textarea {
+      background: #fff;
+      border-color: #dfe5ef;
+      border-radius: 16px;
+      box-shadow: 0 1px 0 rgba(17,24,39,.02);
+    }
+
+    .dashboard-hero {
+      background:
+        radial-gradient(circle at 88% 10%, rgba(20,184,166,.22), transparent 31%),
+        linear-gradient(145deg, #111827 0%, #18317a 100%);
+      color: #fff;
+      border-radius: 28px;
+      padding: 18px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      box-shadow: 0 18px 42px rgba(17,24,39,.18);
+      margin-bottom: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .dashboard-hero::after {
+      content:"";
+      position:absolute;
+      width: 120px;
+      height: 120px;
+      border-radius:50%;
+      right:-42px;
+      bottom:-50px;
+      background: rgba(255,255,255,.10);
+    }
+
+    .dashboard-hero h2 {
+      margin: 5px 0 4px;
+      font-size: 24px;
+      letter-spacing: -.55px;
+      position: relative;
+    }
+
+    .dashboard-hero p {
+      margin: 0;
+      color: rgba(255,255,255,.78);
+      font-size: 13px;
+      line-height: 1.35;
+      position: relative;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items:center;
+      gap: 6px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.84);
+      font-size: 11px;
+      font-weight: 850;
+      position: relative;
+    }
+
+    .safe-pulse {
+      position: relative;
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(231,247,241,.14);
+      border: 1px solid rgba(231,247,241,.24);
+      color: #c8ffef;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin-bottom: 14px;
+    }
+
+    .metric-strip div {
+      padding: 12px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(230,234,242,.92);
+      box-shadow: 0 8px 16px rgba(17,24,39,.05);
+    }
+
+    .metric-strip strong {
+      display:block;
+      font-size: 18px;
+      letter-spacing: -.35px;
+    }
+
+    .metric-strip span {
+      display:block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .circle-top {
+      margin: 10px 0 18px;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+    }
+
+    .circle-accordion { gap: 11px; }
+
+    .accordion-item {
+      border: 1px solid rgba(219,226,239,.94);
+      border-radius: 24px;
+      background: rgba(255,255,255,.86);
+      box-shadow: 0 14px 28px rgba(17,24,39,.07);
+      overflow: hidden;
+    }
+
+    .accordion-trigger {
+      padding: 15px 16px;
+      background: rgba(255,255,255,.88);
+      color: var(--text);
+      border-bottom: 1px solid transparent;
+    }
+
+    .accordion-trigger strong { font-size: 15px; }
+    .accordion-trigger span { color: var(--muted); font-size: 11px; }
+
+    .accordion-trigger b {
+      background: #eef3ff;
+      color: var(--primary-dark);
+    }
+
+    .accordion-item.open .accordion-trigger {
+      color: #fff;
+      background:
+        radial-gradient(circle at 90% 0%, rgba(140,224,204,.25), transparent 32%),
+        linear-gradient(135deg, #14213d, #2754d8);
+      border-bottom-color: rgba(255,255,255,.12);
+    }
+
+    .accordion-item.open .accordion-trigger span { color: rgba(255,255,255,.74); }
+    .accordion-item.open .accordion-trigger b { background: rgba(255,255,255,.16); color: white; }
+
+    .accordion-panel { padding: 13px; background: rgba(248,250,252,.85); }
+
+    .circle-inner-card {
+      background: #fff;
+      border: 1px solid rgba(230,234,242,.92);
+      border-radius: 22px;
+      padding: 15px;
+      box-shadow: none;
+    }
+
+    .circle-title-row h2 { font-size: 19px; }
+
+    .badge {
+      padding: 7px 10px;
+      font-size: 10.5px;
+      box-shadow: inset 0 0 0 1px rgba(15,138,103,.05);
+    }
+
+    .member-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: stretch;
+      margin-bottom: 12px;
+    }
+
+    .parent-stack { gap: 4px; }
+
+    .mini-avatar {
+      width: 38px;
+      height: 38px;
+      border-width: 2px;
+      box-shadow: 0 6px 13px rgba(17,24,39,.10);
+      font-size: 13px;
+    }
+
+    .member-button {
+      min-width: 98px;
+      border-radius: 16px;
+      background: #f6f8ff;
+      border-color: #dfe6ff;
+      color: var(--primary-dark);
+      box-shadow: none;
+      padding: 10px 11px;
+    }
+
+    .schedule-list { gap: 9px; margin: 10px 0 13px; }
+
+    .schedule-row {
+      background: #f8fafc;
+      border-color: #edf0f5;
+      border-radius: 17px;
+      padding: 11px;
+    }
+
+    .action-grid { gap: 10px; }
+
+    .action-tile {
+      border-color: #e4e9f3;
+      border-radius: 20px;
+      background: linear-gradient(180deg, #fff, #fbfcff);
+      box-shadow: 0 9px 17px rgba(17,24,39,.05);
+      min-height: 104px;
+      padding: 13px;
+      text-align: left;
+    }
+
+    .action-tile:hover { transform: translateY(-2px); box-shadow: 0 13px 22px rgba(17,24,39,.08); }
+
+    .action-tile strong { font-size: 13.5px; letter-spacing: -.18px; }
+    .action-tile span:not(.action-icon) { font-size: 11.5px; }
+
+    .action-tile .action-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 13px;
+      margin-bottom: 9px;
+      background: linear-gradient(145deg, #edf2ff, #e5edff);
+      color: #1d4ed8;
+      font-size: 16px;
+      line-height: 1;
+      overflow: hidden;
+      place-items: center;
+      place-content: center;
+      display: grid;
+    }
+    .action-tile .action-icon svg { display: block; }
+
+    .section-title { margin: 22px 1px 11px; }
+    .section-title h3 { font-size: 18px; letter-spacing: -.35px; }
+    .section-title button { color: #2754d8; }
+
+    .ride-item {
+      border: 1px solid rgba(230,234,242,.94);
+      border-radius: 25px;
+      padding: 14px;
+      grid-template-columns: 58px minmax(0,1fr) auto;
+      box-shadow: 0 12px 25px rgba(17,24,39,.07);
+      background: rgba(255,255,255,.92);
+    }
+
+    .ride-item:hover { transform: translateY(-1px); }
+
+    .driver-circle {
+      width: 54px;
+      height: 54px;
+      background: linear-gradient(145deg, #edf2ff, #dfe7ff);
+      border-width: 2px;
+    }
+
+    .driver-circle.green { background: linear-gradient(145deg, #dff9ef, #c7f2df); color: #0f8a67; }
+
+    .ride-meta strong { font-size: 14.5px; letter-spacing: -.16px; }
+    .ride-status { padding: 7px 10px; }
+
+    .bottom-nav {
+      height: 72px;
+      margin: 22px 12px 13px;
+      border-radius: 26px;
+      background: rgba(255,255,255,.88);
+      box-shadow: 0 18px 36px rgba(17,24,39,.13);
+    }
+
+    .nav-btn { font-size: 11px; }
+    .nav-btn.active {
+      background: linear-gradient(145deg, #edf2ff, #e4ecff);
+      box-shadow: inset 0 0 0 1px rgba(39,84,216,.05);
+    }
+
+    .mini-calendar {
+      border-radius: 22px;
+      border-color: #e2e8f0;
+      box-shadow: 0 10px 20px rgba(17,24,39,.05);
+    }
+
+    .mini-calendar-head {
+      background: linear-gradient(135deg, #14213d, #2754d8);
+      padding: 13px 14px;
+    }
+
+    .calendar-grid {
+      gap: 4px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    .calendar-day-name, .calendar-cell {
+      border-radius: 10px;
+      min-height: 35px;
+      background: #f9fafb;
+    }
+
+    .calendar-day-name { background: transparent; min-height: 22px; }
+    .calendar-cell.practice { background: #eaf6ff; color: #155e75; }
+    .calendar-cell.selected { background: #111827; color:#fff; }
+    .calendar-cell.today::after { inset: 2px; border-radius: 11px; }
+
+    .modal-backdrop { background: rgba(15,23,42,.42); }
+
+    .modal {
+      border-radius: 30px 30px 37px 37px;
+      background: #fbfcff;
+      box-shadow: 0 -26px 60px rgba(15,23,42,.25);
+    }
+
+    .modal-head h3 { letter-spacing: -.3px; }
+
+    .x-btn {
+      background: #eef2f7;
+      color: #1f2937;
+    }
+
+    .map-card {
+      height: 270px;
+      background:
+        linear-gradient(90deg, transparent 49%, rgba(255,255,255,.82) 50%, transparent 51%) 0 0 / 64px 64px,
+        linear-gradient(0deg, transparent 49%, rgba(255,255,255,.82) 50%, transparent 51%) 0 0 / 64px 64px,
+        linear-gradient(145deg, #dceafe, #edf7f6);
+      box-shadow: inset 0 0 0 1px rgba(39,84,216,.08), 0 12px 30px rgba(17,24,39,.08);
+    }
+
+    .receipt-row { gap: 16px; }
+    .fare-note {
+      background: linear-gradient(145deg, #f3f7ff, #edfdf8);
+      border-color: #d8e6ff;
+    }
+
+    .progress > div { background: linear-gradient(90deg, #2754d8, #10b981); }
+
+    .profile-sidebar {
+      border-radius: 31px 0 0 31px;
+      background: linear-gradient(180deg, #fff, #f8fafc);
+    }
+
+    .profile-card-main {
+      background: linear-gradient(145deg, #f8fbff, #eef4ff);
+      border-color: #dde7ff;
+    }
+
+    @media (max-width: 480px) {
+      .phone { width: 100vw; height: 100vh; max-width: none; border-radius: 0; padding: 0; }
+      .screen { height: 100vh; border-radius: 0; }
+    }
+  
+
+    /* v4 requested refinements */
+    .landing-clean {
+      min-height: calc(100% - 44px);
+      padding: 22px 20px 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .landing-brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -.45px;
+    }
+
+    .landing-image-card {
+      flex: 1 1 auto;
+      min-height: 360px;
+      max-height: 430px;
+      border-radius: 34px;
+      overflow: hidden;
+      box-shadow: 0 24px 55px rgba(39,84,216,.16);
+      border: 1px solid rgba(255,255,255,.88);
+      background: #eef4ff;
+    }
+
+    .landing-image-card svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .landing-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .signin-label {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      margin-top: 2px;
+    }
+
+    .signin-btn {
+      width: 100%;
+      border: 1px solid rgba(214,222,237,.96);
+      border-radius: 17px;
+      background: rgba(255,255,255,.92);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 13px 14px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 850;
+      cursor: pointer;
+      box-shadow: 0 9px 18px rgba(17,24,39,.05);
+    }
+
+    .signin-btn span {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: #f2f5fb;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .selected-date-note {
+      margin: -4px 0 12px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: #f3f7ff;
+      border: 1px solid #dce7ff;
+      color: #34518f;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .rides-page { padding-bottom: 112px; }
+
+    .ride-category-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(230,234,242,.96);
+      border-radius: 26px;
+      padding: 17px;
+      margin-bottom: 13px;
+      box-shadow: 0 12px 25px rgba(17,24,39,.07);
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .ride-category-card:hover { transform: translateY(-1px); box-shadow: 0 16px 30px rgba(17,24,39,.10); }
+
+    .ride-category-card.active {
+      background:
+        radial-gradient(circle at 95% 0%, rgba(140,224,204,.26), transparent 34%),
+        linear-gradient(145deg, #14213d, #2754d8);
+      color: #fff;
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .ride-category-card h3 {
+      margin: 4px 0 5px;
+      font-size: 17px;
+      letter-spacing: -.28px;
+    }
+
+    .ride-category-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.4;
+    }
+
+    .ride-category-card.active p { color: rgba(255,255,255,.78); }
+
+    .category-label {
+      display: inline-flex;
+      color: var(--primary-dark);
+      background: var(--soft-primary);
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .ride-category-card.active .category-label {
+      color: #dff9ef;
+      background: rgba(255,255,255,.13);
+    }
+
+    .live-pill {
+      border-radius: 999px;
+      padding: 8px 11px;
+      background: #e7f7f1;
+      color: #0f8a67;
+      font-size: 11px;
+      font-weight: 950;
+      box-shadow: inset 0 0 0 1px rgba(15,138,103,.06);
+    }
+
+    .muted-card { opacity: .92; }
+</style>
+
+
+<style id="safeloop-v11-polish">
+  .screen {
+    background:
+      radial-gradient(circle at 18% 0%, rgba(76, 108, 255, .09), transparent 30%),
+      linear-gradient(180deg, #f8faff 0%, #eef2f8 100%);
+  }
+
+  .app-header {
+    border-bottom: 1px solid rgba(226, 232, 240, .72);
+    background: rgba(255,255,255,.62);
+    backdrop-filter: blur(14px);
+    position: sticky;
+    top: 44px;
+    z-index: 8;
+  }
+
+  .content { padding-top: 18px; }
+
+  .page-title {
+    letter-spacing: -.72px;
+    margin-bottom: 6px;
+  }
+
+  .subtext {
+    color: #64708a;
+    line-height: 1.5;
+  }
+
+  .card, .form-card, .choice-card, .ride-detail-card, .modal, .ride-log-card {
+    border-color: rgba(218, 226, 240, .96);
+    box-shadow: 0 14px 30px rgba(25, 35, 60, .075);
+  }
+
+  .ride-log-card {
+    padding: 17px;
+    border-radius: 24px;
+    margin-bottom: 14px;
+  }
+
+  .ride-log-card h4 {
+    font-size: 18px;
+    line-height: 1.18;
+    margin-bottom: 12px;
+  }
+
+  .label-row { margin-bottom: 12px !important; }
+
+  .ride-info-list {
+    gap: 0;
+    border-top: 1px solid rgba(226,232,240,.72);
+    padding-top: 6px;
+  }
+
+  .ride-info-line {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr);
+    align-items: start;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(226,232,240,.58);
+    gap: 12px;
+  }
+
+  .ride-info-line:last-child { border-bottom: 0; }
+
+  .ride-info-line strong {
+    min-width: 0;
+    color: #151b2c;
+  }
+
+  .ride-info-line span {
+    text-align: right;
+    color: #64708a;
+  }
+
+  .ride-card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .ride-card-actions .mini-action, .pickup-actions .mini-action {
+    min-height: 42px;
+    border-radius: 14px;
+    border: 1px solid rgba(203,213,225,.95);
+    background: #fff;
+    color: #182033;
+    box-shadow: 0 7px 14px rgba(17,24,39,.045);
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+
+  .ride-card-actions .mini-action:hover, .pickup-actions .mini-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(17,24,39,.08);
+    border-color: #aebdfc;
+  }
+
+  .ride-card-actions .mini-action.primary, .pickup-actions .mini-action.primary {
+    background: linear-gradient(145deg, #3657d9, #263fc0);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .filter-tabs {
+    background: #e9eef8;
+    padding: 5px;
+    border-radius: 18px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+  }
+
+  .filter-tab {
+    min-height: 39px;
+  }
+
+  .filter-tab.active {
+    box-shadow: 0 10px 18px rgba(34, 54, 112, .11);
+  }
+
+  .badge, .ride-status, .category-label, .live-pill {
+    letter-spacing: -.1px;
+  }
+
+  .summary-metric {
+    background: linear-gradient(180deg, #ffffff, #f8fbff);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+  }
+
+  .route-summary-box {
+    background: linear-gradient(180deg, #f8fbff, #eef5ff);
+  }
+
+  .total-row {
+    background: #f5f8ff;
+    border-radius: 14px;
+    padding: 12px !important;
+    margin-top: 8px;
+  }
+
+  .bottom-nav {
+    box-shadow: 0 -12px 30px rgba(17,24,39,.08);
+    backdrop-filter: blur(12px);
+  }
+</style>
+
+</head>
+<body>
+  <main class="prototype-shell">
+    
+
+    <section class="phone" aria-label="Mobile app prototype">
+      <!-- LANDING -->
+      <div class="screen active" id="landing">
+        <div class="status-bar"><span>9:41</span><div class="status-icons"><span>LTE</span><span class="pill-icon"></span></div></div>
+        <div class="landing-clean">
+          <div class="landing-brand"><div class="logo">SL</div><span>SafeLoop</span></div>
+
+          <div class="landing-image-card" aria-label="Parent ride coordination illustration">
+            <svg viewBox="0 0 320 380" role="img" aria-label="A parent and child meeting a trusted driver beside a car outside school">
+              <defs>
+                <linearGradient id="skyGrad" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="#dfe8ff"/>
+                  <stop offset="1" stop-color="#f5fbff"/>
+                </linearGradient>
+                <linearGradient id="roadGrad" x1="0" x2="1" y1="0" y2="1">
+                  <stop offset="0" stop-color="#23356b"/>
+                  <stop offset="1" stop-color="#3860df"/>
+                </linearGradient>
+                <filter id="softShadow" x="-20%" y="-20%" width="140%" height="160%">
+                  <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#122042" flood-opacity="0.18"/>
+                </filter>
+              </defs>
+              <rect x="0" y="0" width="320" height="380" rx="34" fill="url(#skyGrad)"/>
+              <rect x="0" y="0" width="320" height="170" fill="#cfe2ff" opacity="0.48"/>
+              <circle cx="275" cy="78" r="44" fill="#ffffff" opacity="0.35"/>
+              <rect x="0" y="245" width="320" height="135" fill="#eff5ff"/>
+              <path d="M-10 280 C62 248, 112 315, 181 286 C227 268, 272 244, 330 258 L330 380 L-10 380 Z" fill="url(#roadGrad)"/>
+              <path d="M18 286 C80 262, 126 318, 188 293 C234 274, 270 250, 314 260" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-dasharray="12 12" opacity="0.85"/>
+              <g opacity="0.92">
+                <rect x="16" y="112" width="110" height="92" rx="16" fill="#f7fbff" stroke="#d7e3fb"/>
+                <rect x="27" y="123" width="42" height="30" rx="8" fill="#9fc0ff"/>
+                <rect x="73" y="123" width="42" height="30" rx="8" fill="#9fc0ff"/>
+                <rect x="27" y="157" width="42" height="30" rx="8" fill="#9fc0ff"/>
+                <rect x="73" y="157" width="42" height="30" rx="8" fill="#9fc0ff"/>
+                <rect x="55" y="174" width="28" height="30" rx="3" fill="#c28d52"/>
+              </g>
+              <g filter="url(#softShadow)">
+                <rect x="120" y="176" width="124" height="64" rx="20" fill="#1f2f62"/>
+                <rect x="138" y="152" width="82" height="40" rx="20" fill="#4d74f2"/>
+                <circle cx="149" cy="244" r="13" fill="#ffffff"/>
+                <circle cx="217" cy="244" r="13" fill="#ffffff"/>
+                <circle cx="149" cy="244" r="6" fill="#1f2f62"/>
+                <circle cx="217" cy="244" r="6" fill="#1f2f62"/>
+                <rect x="164" y="160" width="24" height="14" rx="7" fill="#bfe7de"/>
+              </g>
+              <g filter="url(#softShadow)">
+                <circle cx="82" cy="260" r="21" fill="#ffffff"/>
+                <circle cx="82" cy="248" r="10" fill="#ffd8c2"/>
+                <path d="M65 284 C66 267, 76 258, 82 258 C88 258, 98 267, 99 284" fill="#3157d5"/>
+                <path d="M73 241 C76 232, 89 231, 92 242 C89 246, 76 247, 73 241" fill="#2c344c"/>
+              </g>
+              <g filter="url(#softShadow)">
+                <circle cx="54" cy="292" r="15" fill="#ffffff"/>
+                <circle cx="54" cy="284" r="7" fill="#ffe1cf"/>
+                <path d="M44 306 C45 294, 51 289, 54 289 C57 289, 63 294, 64 306" fill="#8ce0cc"/>
+                <path d="M48 279 C49 274, 59 274, 60 280 C57 283, 50 283, 48 279" fill="#4b3b30"/>
+              </g>
+              <g filter="url(#softShadow)">
+                <circle cx="261" cy="260" r="21" fill="#ffffff"/>
+                <circle cx="261" cy="248" r="10" fill="#ffd8c2"/>
+                <path d="M244 284 C245 267, 255 258, 261 258 C267 258, 277 267, 278 284" fill="#2aa07d"/>
+                <path d="M252 241 C255 232, 268 231, 271 242 C268 246, 255 247, 252 241" fill="#463b42"/>
+              </g>
+              <g>
+                <rect x="22" y="20" width="250" height="44" rx="16" fill="#ffffff" opacity="0.92"/>
+                <text x="36" y="39" font-size="12" font-weight="800" fill="#3157d5">SafeLoop</text>
+                <text x="36" y="56" font-size="17" font-weight="900" fill="#14213d">Trusted rides for kids</text>
+              </g>
+              <g>
+                <rect x="150" y="304" width="168" height="46" rx="18" fill="#ffffff" opacity="0.96"/>
+                <circle cx="180" cy="327" r="11" fill="#e7f7f1"/>
+                <path d="M174 327 l4 4 l8 -9" fill="none" stroke="#0f8a67" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <text x="198" y="323" font-size="13" font-weight="900" fill="#14213d">Verified parent</text>
+                <text x="198" y="339" font-size="10" font-weight="700" fill="#667085">Live tracked pickup</text>
+              </g>
+            </svg>
+          </div>
+
+          <div class="landing-actions">
+            <button class="btn btn-primary" onclick="showScreen('signup')">Sign up</button>
+            <div class="signin-label">Sign in</div>
+            <button class="signin-btn" onclick="showScreen('dashboard')"><span>☎</span> Continue with phone number</button>
+            <button class="signin-btn" onclick="showScreen('dashboard')"><span>G</span> Continue with Google</button>
+            <button class="signin-btn" onclick="showScreen('dashboard')"><span></span> Continue with Apple</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIGNUP STEP 1: BASIC PROFILE -->
+      <div class="screen" id="signup">
+        <div class="status-bar"><span>9:42</span><div class="status-icons"><span>LTE</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('landing')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>SafeLoop</span></div>
+          <div style="width:34px"></div>
+        </div>
+        <div class="content">
+          <div class="step-indicator" aria-label="Sign up progress"><span class="step-pill active"></span><span class="step-pill"></span><span class="step-pill"></span><span class="step-pill"></span></div>
+          <h2 class="page-title">Create parent profile</h2>
+          <p class="subtext">Start with basic account details. Verification comes next.</p>
+          <div class="form-card">
+            <label>Full name</label>
+            <input value="Nia Thompson" />
+            <label>Gender</label>
+            <select>
+              <option>Female</option>
+              <option>Male</option>
+              <option>Non-binary</option>
+              <option>Prefer not to say</option>
+            </select>
+            <label>Date of birth</label>
+            <input type="date" value="1987-05-18" />
+            <div class="check-row">
+              <input type="checkbox" checked />
+              <span>I agree to identity verification, circle safety rules, and ride cost sharing terms.</span>
+            </div>
+            <button class="btn btn-primary" onclick="showScreen('signupVerify')">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIGNUP STEP 2: DOCUMENTS + VEHICLE -->
+      <div class="screen" id="signupVerify">
+        <div class="status-bar"><span>9:43</span><div class="status-icons"><span>LTE</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('signup')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>Verification</span></div>
+          <div style="width:34px"></div>
+        </div>
+        <div class="content">
+          <div class="step-indicator" aria-label="Sign up progress"><span class="step-pill done"></span><span class="step-pill active"></span><span class="step-pill"></span><span class="step-pill"></span></div>
+          <h2 class="page-title">Upload safety details</h2>
+          <p class="subtext">Parents can update later, but ride requests and offers require verification.</p>
+          <div class="warning-note"><strong>Note:</strong> if you skip this step, you can browse circles but cannot request or offer a ride until documents and payment are added.</div>
+          <div class="form-card">
+            <div class="upload-card"><div><strong>Government ID</strong><span>Passport, PR card, or BC Services Card</span></div><button class="mini-upload-btn" type="button">Upload</button></div>
+            <div class="upload-card"><div><strong>Driver licence</strong><span>Required before offering rides</span></div><button class="mini-upload-btn" type="button">Upload</button></div>
+            <div class="upload-card"><div><strong>Insurance confirmation</strong><span>ICBC confirmation or policy screenshot</span></div><button class="mini-upload-btn" type="button">Upload</button></div>
+            <label>Car type</label>
+            <input value="Toyota RAV4" />
+            <label>Car plate number</label>
+            <input value="BC · SL 4182" />
+            <label>Credit card information</label>
+            <input value="Visa ending in 4182" />
+            <div class="btn-row">
+              <button class="btn btn-secondary" onclick="showScreen('signupChild')">Update later</button>
+              <button class="btn btn-primary" onclick="showScreen('signupChild')">Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIGNUP STEP 3: ADD CHILD -->
+      <div class="screen" id="signupChild">
+        <div class="status-bar"><span>9:44</span><div class="status-icons"><span>LTE</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('signupVerify')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>Child profile</span></div>
+          <div style="width:34px"></div>
+        </div>
+        <div class="content">
+          <div class="step-indicator" aria-label="Sign up progress"><span class="step-pill done"></span><span class="step-pill done"></span><span class="step-pill active"></span><span class="step-pill"></span></div>
+          <h2 class="page-title">Add your child</h2>
+          <p class="subtext">This helps trusted drivers recognize the right child at pickup.</p>
+          <div class="form-card">
+            <label>Child name</label>
+            <input value="Maya Thompson" />
+            <div class="field-grid">
+              <div><label>Age</label><input value="8" /></div>
+              <div><label>Gender</label><select><option>Girl</option><option>Boy</option><option>Prefer not to say</option></select></div>
+            </div>
+            <div class="field-grid">
+              <div><label>Height</label><input value="128 cm" /></div>
+              <div><label>Hair colour</label><input value="Dark brown" /></div>
+            </div>
+            <label>Pickup note</label>
+            <textarea rows="3">Blue backpack. Usually waits near the main gym entrance.</textarea>
+            <div id="signupChildList" class="child-list"></div>
+            <button class="btn btn-secondary" onclick="saveSignupChild()">Add child</button>
+            <button class="btn-subtle" onclick="addMoreChild()"><span class="plus-pill">+</span> Add more child</button>
+            <button class="btn btn-ghost" onclick="showScreen('onboarding')">Add later</button>
+            <button class="btn btn-primary" onclick="showScreen('onboarding')">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONBOARDING -->
+      <div class="screen" id="onboarding">
+        <div class="status-bar"><span>9:45</span><div class="status-icons"><span>LTE</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('signupChild')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>SafeLoop</span></div>
+          <div class="avatar">NT</div>
+        </div>
+        <div class="content">
+          <div class="step-indicator" aria-label="Sign up progress"><span class="step-pill done"></span><span class="step-pill done"></span><span class="step-pill done"></span><span class="step-pill active"></span></div>
+          <h2 class="page-title">Build your trusted circle</h2>
+          <p class="subtext">Start with parents from your child’s school, team, class, or activity group.</p>
+          <div class="choice-card" onclick="showScreen('buildCircle')">
+            <h3>Create a circle</h3>
+            <p>Invite known parents and start coordinating rides together.</p>
+          </div>
+          <div class="choice-card" onclick="showScreen('joinCircle')">
+            <h3>Join existing circle</h3>
+            <p>Use an invite code from another verified parent.</p>
+          </div>
+          <div class="card">
+            <span class="badge">Trust rule</span>
+            <p class="subtext" style="margin:10px 0 0">Parents can only request or offer rides inside shared circles unless both sides approve a new connection.</p>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-secondary" onclick="showScreen('dashboard')">Skip</button>
+            <button class="btn btn-primary" onclick="showScreen('dashboard')">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUILD CIRCLE -->
+      <div class="screen" id="buildCircle">
+        <div class="status-bar"><span>9:47</span><div class="status-icons"><span>LTE</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('onboarding')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>SafeLoop</span></div>
+          <div class="avatar">NT</div>
+        </div>
+        <div class="content">
+          <h2 class="page-title">Create a circle</h2>
+          <p class="subtext">Add trusted contacts. The dashboard will populate once parents accept.</p>
+          <div class="form-card">
+            <label>Circle name</label>
+            <input value="Thunderbirds Soccer U9" />
+
+            <div class="toggle-row">
+              <div class="toggle-copy">
+                <strong>Private circle</strong>
+                <span>Only invited parents can view and join this circle.</span>
+              </div>
+              <label class="switch" aria-label="Toggle private circle">
+                <input id="privateCircleToggle" type="checkbox" checked onchange="togglePrivateCircle(this.checked)" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div id="privatePasswordField">
+              <label>Circle password</label>
+              <input type="password" value="Soccer2026" />
+            </div>
+
+            <label>Add parent phone numbers</label>
+            <div class="invite-row">
+              <input id="invitePhoneInput" placeholder="+1 604 555 0188" />
+              <button class="icon-action-btn" type="button" onclick="addInviteNumber()">Add</button>
+            </div>
+            <div class="inline-action-row">
+              <button class="link-pill" type="button" onclick="addInviteNumber('+1 604 555 0101','Angela Rivera')">Add number</button>
+              <button class="link-pill" type="button" onclick="addContactSuggestion()">From contacts</button>
+            </div>
+
+            <div id="contactList" class="contact-chip-list">
+              <div class="contact-chip"><div><strong>Angela Rivera</strong><span>+1 604 555 0101 · From contacts</span></div><button type="button" onclick="this.parentElement.remove()">×</button></div>
+              <div class="contact-chip"><div><strong>Marvin Lee</strong><span>+1 604 555 0138 · Added manually</span></div><button type="button" onclick="this.parentElement.remove()">×</button></div>
+            </div>
+            <button class="btn btn-primary" onclick="showScreen('dashboard')">Create circle</button>
+          </div>
+          <div class="card">
+            <strong>Inviting parents</strong>
+            <p class="subtext" style="margin:8px 0 0">You can add multiple phone numbers or pull contacts from your phone to build the circle faster.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- JOIN CIRCLE -->
+      <div class="screen" id="joinCircle">
+        <div class="status-bar"><span>9:47</span><div class="status-icons"><span>LTE</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('onboarding')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>SafeLoop</span></div>
+          <div class="avatar">NT</div>
+        </div>
+        <div class="content">
+          <h2 class="page-title">Join a circle</h2>
+          <p class="subtext">Search for a circle, or use a unique circle code shared by a verified parent.</p>
+          <div class="circle-search" style="margin-bottom:14px"><span>⌕</span><input type="search" placeholder="Search school, team, class, or activity circle" /></div>
+          <div class="form-card">
+            <label>Unique circle code</label>
+            <input value="U9-SOCCER-458" />
+            <label>Password (if private)</label>
+            <input type="password" placeholder="Enter circle password" />
+            <button class="btn btn-primary" onclick="showScreen('dashboard')">Join circle</button>
+          </div>
+          <div class="card">
+            <strong>Circles your contacts already joined</strong>
+            <p class="subtext" style="margin:8px 0 12px">Recommended circles based on parents already in your phone contacts.</p>
+            <div class="recommendation-list">
+              <div class="recommendation-card">
+                <div><strong>Thunderbirds Soccer U9</strong><span>Angela Rivera and 2 more contacts are already here.</span></div>
+                <button class="mini-upload-btn" type="button" onclick="joinRecommendedCircle(this)">Join</button>
+              </div>
+              <div class="recommendation-card">
+                <div><strong>Joyce Elementary Pickup</strong><span>Marvin Lee and Sarah Park are active in this circle.</span></div>
+                <button class="mini-upload-btn" type="button" onclick="joinRecommendedCircle(this)">Join</button>
+              </div>
+            </div>
+            <div class="finish-row hidden" id="joinFinishRow"><button class="btn btn-primary" onclick="showScreen('dashboard')">Finish</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div class="screen" id="dashboard">
+        <div class="status-bar"><span>3:18</span><div class="status-icons"><span>5G</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <div class="brand"><div class="logo">SL</div><span>SafeLoop</span></div>
+          <button class="avatar" onclick="openProfileDrawer()" aria-label="Open profile">NT</button>
+        </div>
+        <div class="content">
+          <div class="dashboard-hero">
+            <div>
+              <span class="eyebrow">Today · Fri, Jul 3, 2026</span>
+              <h2>Hi Nia</h2>
+              <p>2 upcoming rides need attention. Your circle is verified and active.</p>
+            </div>
+            <div class="safe-pulse">✓ Safe circle</div>
+          </div>
+          <div class="circle-section-head"><h3>My Circle</h3><button onclick="showScreen('joinCircle')">Join circle</button></div>
+          <div class="circle-search"><span>⌕</span><input type="search" placeholder="Search school, team, or activity circle" oninput="filterCircles(this.value)" /></div>
+          <div class="circle-top">
+            <div class="circle-accordion" aria-label="Circle schedules">
+              <section class="accordion-item" data-circle="joyce elementary school pickup">
+                <button class="accordion-trigger" onclick="toggleCircleAccordion(this)">
+                  <div><strong>Joyce Elementary School Pickup</strong><span>Code: JOYCE-PICKUP-102</span></div><b>+</b>
+                </button>
+                <div class="accordion-panel">
+                  <div class="circle-inner-card">
+                    <div class="circle-title-row">
+                      <div>
+                        <h2>Joyce Elementary</h2>
+                        <p class="subtext" style="margin:5px 0 0">Unique Circle Code: JOYCE-PICKUP-102</p>
+                      </div>
+                      <span class="badge">4 verified</span>
+                    </div>
+                    <div class="member-row">
+                      <div class="parent-stack"><div class="mini-avatar ">NT</div><div class="mini-avatar green">AR</div><div class="mini-avatar orange">JL</div><div class="mini-avatar more">+1</div></div>
+                      <button class="member-button" onclick="openModal('membersModal')">See members</button>
+                    </div>
+                    <div class="schedule-list">
+                      <div class="schedule-row"><div><strong>Mon, Jul 6 · School pickup</strong><span>3:00 PM · Joyce Elementary</span></div><span class="ride-status green">Full</span></div><div class="schedule-row"><div><strong>Wed, Jul 8 · Library club</strong><span>4:00 PM · School to Renfrew</span></div><span class="ride-status ">Ride Request</span></div>
+                    </div>
+                    <div class="action-grid">
+                      <button class="action-tile" onclick="openModal('scheduleModal')"><span class="action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><strong>Upload schedule</strong><span>Add team or class calendar</span></button>
+                      <button class="action-tile" onclick="openModal('availabilityModal')"><span class="action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4 4 10-10"/></svg></span><strong>Offer a ride</strong><span>Share when you can drive</span></button>
+                      <button class="action-tile" onclick="openModal('calendarModal')"><span class="action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><strong>Activity calendar</strong><span>See this week’s rides</span></button>
+                      <button class="action-tile" onclick="openModal('requestRideModal')"><span class="action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span><strong>Request a ride</strong><span>Ask your circle for help</span></button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="accordion-item" data-circle="friday art club">
+                <button class="accordion-trigger" onclick="toggleCircleAccordion(this)">
+                  <div><strong>Friday Art Club</strong><span>Code: ART-FRI-218</span></div><b>+</b>
+                </button>
+                <div class="accordion-panel">
+                  <div class="circle-inner-card">
+                    <div class="circle-title-row">
+                      <div>
+                        <h2>Friday Art Club</h2>
+                        <p class="subtext" style="margin:5px 0 0">Unique Circle Code: ART-FRI-218</p>
+                      </div>
+                      <span class="badge">3 verified</span>
+                    </div>
+                    <div class="member-row">
+                      <div class="parent-stack"><div class="mini-avatar ">NT</div><div class="mini-avatar pink">SP</div><div class="mini-avatar gray">DK</div></div>
+                      <button class="member-button" onclick="openModal('membersModal')">See members</button>
+                    </div>
+                    <div class="schedule-list">
+                      <div class="schedule-row"><div><strong>Fri, Jul 10 · Art club</strong><span>4:15 PM · School to Renfrew Community Centre</span></div><span class="ride-status ">Ride Request</span></div><div class="schedule-row"><div><strong>Fri, Jul 17 · Art club</strong><span>4:15 PM · Driver needed</span></div><span class="ride-status ">Ride Request</span></div>
+                    </div>
+                    <div class="action-grid">
+                      <button class="action-tile" onclick="openModal('scheduleModal')"><span class="action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><strong>Upload schedule</strong><span>Add team or class calendar</span></button>
+                      <button class="action-tile" onclick="openModal('availabilityModal')"><span class="action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4 4 10-10"/></svg></span><strong>Offer a ride</strong><span>Share when you can drive</span></button>
+                      <button class="action-tile" onclick="openModal('calendarModal')"><span class="action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><strong>Activity calendar</strong><span>See this week’s rides</span></button>
+                      <button class="action-tile" onclick="openModal('requestRideModal')"><span class="action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span><strong>Request a ride</strong><span>Ask your circle for help</span></button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="accordion-item open" data-circle="thunderbirds soccer u9">
+                <button class="accordion-trigger" onclick="toggleCircleAccordion(this)">
+                  <div><strong>Thunderbirds Soccer U9</strong><span>Code: U9-SOCCER-458</span></div><b>−</b>
+                </button>
+                <div class="accordion-panel">
+                  <div class="circle-inner-card">
+                    <div class="circle-title-row">
+                      <div>
+                        <h2>Thunderbirds Soccer U9</h2>
+                        <p class="subtext" style="margin:5px 0 0">Unique Circle Code: U9-SOCCER-458</p>
+                      </div>
+                      <span class="badge">5 verified</span>
+                    </div>
+                    <div class="member-row">
+                      <div class="parent-stack"><div class="mini-avatar ">NT</div><div class="mini-avatar green">AR</div><div class="mini-avatar orange">ML</div><div class="mini-avatar more">+2</div></div>
+                      <button class="member-button" onclick="openModal('membersModal')">See members</button>
+                    </div>
+                    <div class="schedule-list">
+                      <div class="schedule-row"><div><strong>Thu, Jul 9 · Soccer practice</strong><span>3:30 PM · Joyce Elementary to Trout Lake</span></div><span class="ride-status green">Full</span></div><div class="schedule-row"><div><strong>Sat, Jul 11 · Saturday game</strong><span>9:00 AM · East Van to Killarney Field</span></div><span class="ride-status green">Offered</span></div>
+                    </div>
+                    <div class="action-grid">
+                      <button class="action-tile" onclick="openModal('scheduleModal')"><span class="action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span><strong>Upload schedule</strong><span>Add team or class calendar</span></button>
+                      <button class="action-tile" onclick="openModal('availabilityModal')"><span class="action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4 4 10-10"/></svg></span><strong>Offer a ride</strong><span>Share when you can drive</span></button>
+                      <button class="action-tile" onclick="openModal('calendarModal')"><span class="action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><strong>Activity calendar</strong><span>See this week’s rides</span></button>
+                      <button class="action-tile" onclick="openModal('requestRideModal')"><span class="action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span><strong>Request a ride</strong><span>Ask your circle for help</span></button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <div class="section-title"><h3>Upcoming Rides</h3><button onclick="openModal('offerRideModal')">Offer ride</button></div>
+
+          <div class="ride-item" onclick="showScreen('ride')">
+            <div class="driver-circle">AR<div class="rider-dots"><div class="rider-dot">M</div><div class="rider-dot">L</div></div></div>
+            <div class="ride-meta">
+              <strong>Thursday soccer practice</strong>
+              <span>3:30 PM pickup · Joyce Elementary to Trout Lake Field</span>
+            </div>
+            <div class="ride-status green">Full</div>
+          </div>
+
+          <div class="ride-item" onclick="showScreen('openRide')">
+            <div class="driver-circle" style="background:#f1f3f8;color:#6b7280">?</div>
+            <div class="ride-meta">
+              <strong>Friday art club</strong>
+              <span>4:15 PM pickup · School to Renfrew Community Centre</span>
+            </div>
+            <div class="ride-status">Ride Request</div>
+          </div>
+
+          <div class="ride-item" onclick="openModal('offerRideModal')">
+            <div class="driver-circle green">NT<div class="rider-dots"><div class="rider-dot">2</div></div></div>
+            <div class="ride-meta">
+              <strong>Offer: Saturday game</strong>
+              <span>Can take two riders · 9:00 AM · East Van</span>
+            </div>
+            <div class="ride-status green">Offered</div>
+          </div>
+
+          <div class="section-title"><h3>Contribution</h3><button onclick="showScreen('scorecard')">View</button></div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+              <div>
+                <strong>Reliable Helper badge</strong>
+                <p class="subtext" style="margin:6px 0 0">Nia offered 3 rides and requested 2 this month.</p>
+              </div>
+              <span class="badge">Balanced</span>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <button class="nav-btn active">Home</button><button class="nav-btn" onclick="showScreen('rides')">Rides</button><button class="nav-btn" onclick="showScreen('safety')">Safety</button><button class="nav-btn" onclick="showScreen('scorecard')">Score</button>
+        </div>
+
+        <div class="profile-backdrop" id="profileDrawer" onclick="closeProfileDrawer(event)">
+          <aside class="profile-sidebar" onclick="event.stopPropagation()" aria-label="Profile details">
+            <div class="profile-head">
+              <h3 style="margin:0">Account</h3>
+              <button class="x-btn" onclick="closeProfileDrawer()">×</button>
+            </div>
+            <div class="drawer-tabs" role="tablist" aria-label="Profile menu">
+              <button class="drawer-tab active" onclick="showDrawerTab('drawerProfile', this)">Profile</button>
+              <button class="drawer-tab" onclick="showDrawerTab('drawerCircles', this)">My Circle</button>
+              <button class="drawer-tab" onclick="showDrawerTab('drawerDocs', this)">Upload Documents</button>
+            </div>
+
+            <div class="drawer-panel active" id="drawerProfile">
+              <div class="profile-card-main">
+                <div class="avatar drawer-avatar">NT</div>
+                <h3>Nia Thompson</h3>
+                <p>Verified parent · SafeLoop member</p>
+              </div>
+              <div class="profile-detail"><span>Child</span><strong>Maya, 8</strong></div>
+              <div class="profile-detail"><span>Home area</span><strong>Joyce-Collingwood</strong></div>
+              <div class="profile-detail"><span>Licence</span><strong>Verified</strong></div>
+              <div class="profile-detail"><span>ICBC insurance</span><strong>Confirmed</strong></div>
+              <div class="profile-detail"><span>Payment</span><strong>Visa ending in 4182</strong></div>
+              <div class="profile-detail"><span>Contribution</span><strong>3 offered · 2 requested</strong></div>
+            </div>
+
+            <div class="drawer-panel" id="drawerCircles">
+              <div class="drawer-list-card"><strong>Joyce Elementary School Pickup</strong><span>School pickup · 4 verified parents · 2 rides this week</span></div>
+              <div class="drawer-list-card"><strong>Friday Art Club</strong><span>After-school studio rides · driver needed Friday</span></div>
+              <div class="drawer-list-card"><strong>Thunderbirds Soccer U9</strong><span>Active soccer schedule · 5 verified parents</span></div>
+              <button class="btn btn-secondary" onclick="showScreen('joinCircle')">Find or join circle</button>
+            </div>
+
+            <div class="drawer-panel" id="drawerDocs">
+              <div class="upload-card"><div><strong>Government ID</strong><span>Verified</span></div><button class="mini-upload-btn" type="button">Update</button></div>
+              <div class="upload-card"><div><strong>Driver licence</strong><span>Verified</span></div><button class="mini-upload-btn" type="button">Update</button></div>
+              <div class="upload-card"><div><strong>Insurance confirmation</strong><span>ICBC confirmed</span></div><button class="mini-upload-btn" type="button">Update</button></div>
+              <div class="upload-card"><div><strong>Payment card</strong><span>Visa ending in 4182</span></div><button class="mini-upload-btn" type="button">Update</button></div>
+              <div class="warning-note">Requests and offers are enabled only when required documents and payment are active.</div>
+            </div>
+
+            <button class="btn btn-secondary" style="margin-top:16px" onclick="closeProfileDrawer()">Close profile</button>
+          </aside>
+        </div>
+
+        <div class="modal-backdrop" id="membersModal">
+          <div class="modal">
+            <div class="modal-head"><h3>Circle members</h3><button class="x-btn" onclick="closeModal('membersModal')">×</button></div>
+            <div class="soft-row"><div><strong>Nia Thompson</strong><span>Maya’s parent · can request and drive</span></div><span class="badge">You</span></div>
+            <div class="soft-row"><div><strong>Angela Rivera</strong><span>Verified driver · 3 completed rides</span></div><span class="badge">Trusted</span></div>
+            <div class="soft-row"><div><strong>Marcus Lee</strong><span>Verified parent · usually drives Fridays</span></div><span class="badge">Trusted</span></div>
+            <div class="soft-row"><div><strong>Sara Patel</strong><span>Verified parent · emergency contact approved</span></div><span class="badge">Trusted</span></div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="badgesModal">
+          <div class="modal">
+            <div class="modal-head"><h3>Contribution badges</h3><button class="x-btn" onclick="closeModal('badgesModal')">×</button></div>
+            <div class="soft-row"><div><strong>Reliable Helper</strong><span>Balanced participation in your circle.</span></div><span class="badge">Active</span></div>
+            <div class="soft-row"><div><strong>Trusted Driver</strong><span>Completed 5 safe rides with positive confirmations.</span></div><span class="badge">Unlocked</span></div>
+            <div class="soft-row"><div><strong>Community Supporter</strong><span>Helped multiple children across the month.</span></div><span class="badge">Unlocked</span></div>
+            <div class="soft-row"><div><strong>Consistent Parent</strong><span>No late cancellations this month.</span></div><span class="badge">Progress</span></div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="requestRideModal">
+          <div class="modal">
+            <div class="modal-head">
+              <h3>Request a ride</h3>
+              <button class="x-btn" onclick="closeModal('requestRideModal')">×</button>
+            </div>
+            <div class="mini-calendar" data-calendar data-selected="2026-07-09">
+              <div class="mini-calendar-head">
+                <button class="cal-nav" type="button" onclick="changeCalendarMonth(this, -1)">‹</button>
+                <strong data-cal-title>July 2026</strong>
+                <button class="cal-nav" type="button" onclick="changeCalendarMonth(this, 1)">›</button>
+              </div>
+              <div class="calendar-grid" data-cal-grid></div>
+            </div>
+            <div class="legend-row"><span><i class="legend-dot dot-practice"></i>Practice</span><span><i class="legend-dot dot-selected"></i>Selected</span><span><i class="legend-dot dot-closed"></i>Closed</span><span><i class="legend-dot dot-holiday"></i>Holiday</span></div>
+            <div class="selected-date-note">Selected: <strong data-selected-date-output>Thursday, Jul 9, 2026</strong></div>
+            <label>Date</label>
+            <input data-selected-date-input value="Thursday, Jul 9, 2026" readonly />
+            <div class="field-grid">
+              <div><label>Pickup start window</label><input data-pickup-time-input value="3:30 PM" /></div>
+              <div><label>Pickup close window</label><input value="3:45 PM" /></div>
+            </div>
+            <label>Pickup location</label>
+            <input value="Joyce Elementary School" />
+            <label>Destination</label>
+            <input value="Trout Lake Soccer Field" />
+            <label>Add your child</label>
+            <select><option>Maya, 8</option></select>
+            <label>Pickup note</label>
+            <textarea rows="3">Maya waits by the gym entrance. Blue backpack.</textarea>
+            <button class="btn btn-primary" onclick="submitRideRequest()">Add request</button>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="requestSuccessModal">
+          <div class="modal">
+            <div class="success-modal-body">
+              <div class="success-badge-emoji">✅</div>
+              <h3 style="margin:0 0 8px">Ride requested!</h3>
+              <p class="subtext" style="margin:0 0 18px">Your ride request has been shared with your trusted circle.</p>
+              <button class="btn btn-primary" onclick="goToFutureRides()">See all available/requested rides</button>
+              <button class="btn btn-secondary" style="margin-top:10px" onclick="closeModal('requestSuccessModal')">Stay here</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="offerSuccessModal">
+          <div class="modal">
+            <div class="success-modal-body">
+              <div class="success-badge-emoji">🚗</div>
+              <h3 style="margin:0 0 8px">Offer posted!</h3>
+              <p class="subtext" style="margin:0 0 18px">Your available ride has been shared with your trusted circle.</p>
+              <button class="btn btn-primary" onclick="goToFutureOfferedRides()">See all available/requested rides</button>
+              <button class="btn btn-secondary" style="margin-top:10px" onclick="closeModal('offerSuccessModal')">Stay here</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="offerRideModal">
+          <div class="modal">
+            <div class="modal-head">
+              <h3>Offer a ride</h3>
+              <button class="x-btn" onclick="closeModal('offerRideModal')">×</button>
+            </div>
+            <div class="field-grid">
+              <div><label>Date</label><input data-selected-date-input value="Saturday, Jul 11, 2026" /></div>
+              <div><label>Seats available</label><input value="2" /></div>
+            </div>
+            <label>Route</label>
+            <input value="East Van to Killarney Field" />
+            <label>Return option</label>
+            <select><option>One-way drop off</option><option>Can bring riders home</option></select>
+            <button class="btn btn-primary" onclick="submitOffer()">Post offer</button>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="scheduleModal">
+          <div class="modal">
+            <div class="modal-head"><h3>Upload schedule</h3><button class="x-btn" onclick="closeModal('scheduleModal')">×</button></div>
+            <p class="subtext">Add the team or class schedule once, then parents can request rides against the same calendar.</p>
+            <div class="mini-calendar" data-calendar data-selected="2026-07-09">
+              <div class="mini-calendar-head">
+                <button class="cal-nav" type="button" onclick="changeCalendarMonth(this, -1)">‹</button>
+                <strong data-cal-title>July 2026</strong>
+                <button class="cal-nav" type="button" onclick="changeCalendarMonth(this, 1)">›</button>
+              </div>
+              <div class="calendar-grid" data-cal-grid></div>
+            </div>
+            <div class="legend-row"><span><i class="legend-dot dot-practice"></i>Practice</span><span><i class="legend-dot dot-selected"></i>Selected</span><span><i class="legend-dot dot-closed"></i>Closed</span><span><i class="legend-dot dot-holiday"></i>Holiday</span></div>
+            <button class="btn btn-primary" onclick="closeModal('scheduleModal')">Upload schedule file</button>
+            <button class="btn btn-secondary" onclick="closeModal('scheduleModal')">Add manually</button>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="availabilityModal">
+          <div class="modal">
+            <div class="modal-head"><h3>Offer a ride</h3><button class="x-btn" onclick="closeModal('availabilityModal')">×</button></div>
+            <p class="subtext">Select a date you can drive, set your pickup window, and define your coverage area.</p>
+            <div class="mini-calendar" data-calendar data-selected="2026-07-11">
+              <div class="mini-calendar-head">
+                <button class="cal-nav" type="button" onclick="changeCalendarMonth(this, -1)">‹</button>
+                <strong data-cal-title>July 2026</strong>
+                <button class="cal-nav" type="button" onclick="changeCalendarMonth(this, 1)">›</button>
+              </div>
+              <div class="calendar-grid" data-cal-grid></div>
+            </div>
+            <div class="legend-row"><span><i class="legend-dot dot-practice"></i>Practice</span><span><i class="legend-dot dot-selected"></i>Selected</span><span><i class="legend-dot dot-closed"></i>Closed</span><span><i class="legend-dot dot-holiday"></i>Holiday</span></div>
+            <div class="selected-date-note">Selected: <strong data-selected-date-output>Saturday, Jul 11, 2026</strong></div>
+            <label>Date</label>
+            <input data-selected-date-input value="Saturday, Jul 11, 2026" readonly />
+            <div class="field-grid">
+              <div><label>Start time window</label><input value="8:30 AM" /></div>
+              <div><label>Close time window</label><input value="9:15 AM" /></div>
+            </div>
+            <div class="field-grid">
+              <div><label>Maximum riders</label><input value="2" /></div>
+              <div><label>Coverage area</label><input value="East Van" /></div>
+            </div>
+            <label>Route note</label>
+            <input value="East Van to Killarney Field" />
+            <button class="btn btn-primary" onclick="submitOffer()">Post offer</button>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="calendarModal">
+          <div class="modal">
+            <div class="modal-head"><h3>Activity calendar</h3><button class="x-btn" onclick="closeModal('calendarModal')">×</button></div>
+            <div class="mini-calendar" data-calendar data-selected="2026-07-09">
+              <div class="mini-calendar-head">
+                <button class="cal-nav" type="button" onclick="changeCalendarMonth(this, -1)">‹</button>
+                <strong data-cal-title>July 2026</strong>
+                <button class="cal-nav" type="button" onclick="changeCalendarMonth(this, 1)">›</button>
+              </div>
+              <div class="calendar-grid" data-cal-grid></div>
+            </div>
+            <div class="legend-row"><span><i class="legend-dot dot-practice"></i>Practice</span><span><i class="legend-dot dot-selected"></i>Selected</span><span><i class="legend-dot dot-closed"></i>Closed</span><span><i class="legend-dot dot-holiday"></i>Holiday</span></div>
+            <div class="soft-row"><div><strong>Thu, Jul 9 · Soccer practice</strong><span>3:30 PM pickup · Angela driving</span></div><span class="badge">Full</span></div>
+            <div class="soft-row"><div><strong>Fri, Jul 10 · Art club</strong><span>4:15 PM pickup · driver needed</span></div><span class="ride-status">Ride Request</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIDES LIST -->
+      <div class="screen" id="rides">
+        <div class="status-bar"><span>3:20</span><div class="status-icons"><span>5G</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <div class="brand"><div class="logo">SL</div><span>Rides</span></div>
+          <button class="avatar" onclick="openProfileDrawer()" aria-label="Open profile">NT</button>
+        </div>
+        <div class="content rides-page">
+          <h2 class="page-title">Ride activity</h2>
+          <p class="subtext">Track active rides, plan future rides, and review completed trips.</p>
+
+          <section class="ride-section">
+            <div class="section-head-row"><h3>On-going ride</h3></div>
+            <div class="ride-category-card active" onclick="showScreen('ride')">
+              <div>
+                <span class="category-label">Your requested ride</span>
+                <h3>Thursday soccer practice</h3>
+                <p>Angela is driving · Maya picked up · ETA 3:52 PM</p>
+              </div>
+              <span class="live-pill">Live</span>
+            </div>
+            <div class="ride-category-card" onclick="showScreen('rideDriver')">
+              <div>
+                <span class="category-label">You are driving</span>
+                <h3>Saturday game carpool</h3>
+                <p>2 riders onboard · Next pickup at Joyce Elementary</p>
+                <span class="ongoing-subtitle">Route active · ETA to field 9:20 AM</span>
+              </div>
+              <span class="badge">Driving</span>
+            </div>
+          </section>
+
+          <section class="ride-section">
+            <div class="section-head-row"><h3>Future ride</h3><button class="mini-link" onclick="showScreen('futureRides')">See all</button></div>
+            <div class="ride-category-card" onclick="showScreen('futureRides')">
+              <div>
+                <span class="category-label">You're responsible</span>
+                <h3>Saturday game carpool</h3>
+                <p>You are the driver · 2 riders assigned · Jul 11, 9:00 AM</p>
+              </div>
+              <span class="badge">Driver</span>
+            </div>
+            <div class="ride-category-card" onclick="showScreen('futureRides')">
+              <div>
+                <span class="category-label">Assigned to a ride</span>
+                <h3>Friday art club</h3>
+                <p>Angela Rivera is driving · Maya confirmed · Jul 10, 4:15 PM</p>
+              </div>
+              <span class="ride-status">Assigned</span>
+            </div>
+          </section>
+
+          <section class="ride-section">
+            <div class="section-head-row"><h3>Past ride</h3><button class="mini-link" onclick="showScreen('pastRides')">See all</button></div>
+            <div class="ride-category-card muted-card" onclick="showScreen('pastRides')">
+              <div>
+                <span class="category-label">Past ride</span>
+                <h3>Monday school pickup</h3>
+                <p>Completed · $2.10 deducted · Safe arrival confirmed</p>
+              </div>
+              <span class="badge">Done</span>
+            </div>
+          </section>
+        </div>
+        <div class="bottom-nav">
+          <button class="nav-btn" onclick="showScreen('dashboard')">Home</button><button class="nav-btn active">Rides</button><button class="nav-btn" onclick="showScreen('safety')">Safety</button><button class="nav-btn" onclick="showScreen('scorecard')">Score</button>
+        </div>
+      </div>
+
+      <!-- FUTURE RIDES -->
+      <div class="screen" id="futureRides">
+        <div class="status-bar"><span>3:26</span><div class="status-icons"><span>5G</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('rides')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>Future rides</span></div>
+          <div class="avatar">NT</div>
+        </div>
+        <div class="content" style="padding-bottom:112px">
+          <h2 class="page-title">Future rides</h2>
+          <p class="subtext">All upcoming rides in your circles. Use tabs to switch between rides you offer and rides you requested.</p>
+
+          <div class="filter-tabs">
+            <button class="filter-tab active" onclick="setRideFilter('future','offered',this)">Offered ride</button>
+            <button class="filter-tab" onclick="setRideFilter('future','requested',this)">Requested ride</button>
+          </div>
+
+          <div class="ride-filter-panel active" data-filter-page="future" data-filter-type="offered">
+            <div class="ride-log-card">
+              <div class="label-row"><span class="category-label">Offered ride</span><span class="badge">Driver</span></div>
+              <h4>Saturday game carpool</h4>
+              <div class="ride-info-list">
+                <div class="ride-info-line"><strong>Driver</strong><span>You</span></div>
+                <div class="ride-info-line"><strong>Phone</strong><span>+1 604 555 4182</span></div>
+                <div class="ride-info-line"><strong>Car</strong><span>Toyota RAV4</span></div>
+                <div class="ride-info-line"><strong>Plate</strong><span>BC · SL 4182</span></div>
+                <div class="ride-info-line"><strong>Route</strong><span>Joyce Elementary → Killarney Field</span></div>
+                <div class="ride-info-line"><strong>Time</strong><span>Pickup 8:55 AM · Arrive 9:20 AM</span></div>
+                <div class="ride-info-line"><strong>Est. reimbursement</strong><span>+$5.80 (9.2 km · fuel + parking)</span></div>
+              </div>
+            </div>
+            <div class="ride-log-card">
+              <div class="label-row"><span class="category-label">Offered ride</span><span class="badge">Driver</span></div>
+              <h4>Sunday science camp drop-off</h4>
+              <div class="ride-info-list">
+                <div class="ride-info-line"><strong>Driver</strong><span>You</span></div>
+                <div class="ride-info-line"><strong>Phone</strong><span>+1 604 555 4182</span></div>
+                <div class="ride-info-line"><strong>Car</strong><span>Toyota RAV4</span></div>
+                <div class="ride-info-line"><strong>Plate</strong><span>BC · SL 4182</span></div>
+                <div class="ride-info-line"><strong>Route</strong><span>Collingwood → Science World</span></div>
+                <div class="ride-info-line"><strong>Time</strong><span>Pickup 9:10 AM · Arrive 9:40 AM</span></div>
+                <div class="ride-info-line"><strong>Est. reimbursement</strong><span>+$4.30 (6.8 km · fuel + parking)</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ride-filter-panel" data-filter-page="future" data-filter-type="requested">
+            <div class="ride-log-card">
+              <div class="label-row"><span class="category-label">Requested ride</span><span class="ride-status">Assigned</span></div>
+              <h4>Friday art club</h4>
+              <div class="ride-info-list">
+                <div class="ride-info-line"><strong>Driver</strong><span>Angela Rivera</span></div>
+                <div class="ride-info-line"><strong>Phone</strong><span>+1 604 555 0101</span></div>
+                <div class="ride-info-line"><strong>Car</strong><span>Honda CR-V</span></div>
+                <div class="ride-info-line"><strong>Plate</strong><span>BC · AR 2487</span></div>
+                <div class="ride-info-line"><strong>Route</strong><span>School → Renfrew Community Centre</span></div>
+                <div class="ride-info-line"><strong>Time</strong><span>Pickup 4:15 PM · Arrive 4:40 PM</span></div>
+                <div class="ride-info-line"><strong>Est. cost share</strong><span>$3.60 (5.7 km · fuel + parking)</span></div>
+              </div>
+            </div>
+            <div class="ride-log-card">
+              <div class="label-row"><span class="category-label">Requested ride</span><span class="ride-status">Ride Request</span></div>
+              <h4>New soccer practice request</h4>
+              <div class="ride-info-list">
+                <div class="ride-info-line"><strong>Driver</strong><span>Not assigned yet</span></div>
+                <div class="ride-info-line"><strong>Phone</strong><span>Shown after driver accepts</span></div>
+                <div class="ride-info-line"><strong>Car</strong><span>Shown after driver accepts</span></div>
+                <div class="ride-info-line"><strong>Plate</strong><span>Shown after driver accepts</span></div>
+                <div class="ride-info-line"><strong>Route</strong><span>Joyce Elementary → Trout Lake Field</span></div>
+                <div class="ride-info-line"><strong>Time</strong><span>Pickup 3:30 PM · Arrive estimate pending</span></div>
+                <div class="ride-info-line"><strong>Est. cost share</strong><span>~$4.20 (est. 6.5 km · confirmed on match)</span></div>
+              </div>
+            </div>
+            <div class="ride-log-card">
+              <div class="label-row"><span class="category-label">Requested ride</span><span class="ride-status">Assigned</span></div>
+              <h4>Thursday soccer practice</h4>
+              <div class="ride-info-list">
+                <div class="ride-info-line"><strong>Driver</strong><span>Marcus Lee</span></div>
+                <div class="ride-info-line"><strong>Phone</strong><span>+1 604 555 0138</span></div>
+                <div class="ride-info-line"><strong>Car</strong><span>Subaru Outback</span></div>
+                <div class="ride-info-line"><strong>Plate</strong><span>BC · ML 8821</span></div>
+                <div class="ride-info-line"><strong>Route</strong><span>Joyce Elementary → Trout Lake Field</span></div>
+                <div class="ride-info-line"><strong>Time</strong><span>Pickup 3:30 PM · Arrive 3:52 PM</span></div>
+                <div class="ride-info-line"><strong>Est. cost share</strong><span>$4.20 (6.5 km · fuel + parking)</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <button class="nav-btn" onclick="showScreen('dashboard')">Home</button><button class="nav-btn active" onclick="showScreen('rides')">Rides</button><button class="nav-btn" onclick="showScreen('safety')">Safety</button><button class="nav-btn" onclick="showScreen('scorecard')">Score</button>
+        </div>
+      </div>
+
+      <!-- PAST RIDES -->
+      <div class="screen" id="pastRides">
+        <div class="status-bar"><span>3:28</span><div class="status-icons"><span>5G</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('rides')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>Past rides</span></div>
+          <div class="avatar">NT</div>
+        </div>
+        <div class="content" style="padding-bottom:112px">
+          <h2 class="page-title">Past rides</h2>
+          <p class="subtext">Completed ride history. Use tabs to filter rides you offered versus rides you requested.</p>
+
+          <div class="filter-tabs">
+            <button class="filter-tab active" onclick="setRideFilter('past','offered',this)">Offered ride</button>
+            <button class="filter-tab" onclick="setRideFilter('past','requested',this)">Requested ride</button>
+          </div>
+
+          <div class="ride-filter-panel active" data-filter-page="past" data-filter-type="offered">
+            <div class="ride-log-card">
+              <div class="label-row"><span class="category-label">Offered ride</span><span class="badge">Done</span></div>
+              <h4>Monday school pickup</h4>
+              <div class="ride-info-list">
+                <div class="ride-info-line"><strong>Driver</strong><span>You</span></div>
+                <div class="ride-info-line"><strong>Phone</strong><span>+1 604 555 4182</span></div>
+                <div class="ride-info-line"><strong>Car</strong><span>Toyota RAV4</span></div>
+                <div class="ride-info-line"><strong>Plate</strong><span>BC · SL 4182</span></div>
+                <div class="ride-info-line"><strong>Route</strong><span>Joyce Elementary → Home</span></div>
+                <div class="ride-info-line"><strong>Time</strong><span>Picked up 3:05 PM · Arrived 3:24 PM</span></div>
+              </div>
+              <div class="ride-card-actions">
+                <button class="mini-action primary" onclick="showScreen('tripSummary')">See summary</button>
+              </div>
+            </div>
+            <div class="ride-log-card">
+              <div class="label-row"><span class="category-label">Offered ride</span><span class="badge">Done</span></div>
+              <h4>Saturday swim practice</h4>
+              <div class="ride-info-list">
+                <div class="ride-info-line"><strong>Driver</strong><span>You</span></div>
+                <div class="ride-info-line"><strong>Phone</strong><span>+1 604 555 4182</span></div>
+                <div class="ride-info-line"><strong>Car</strong><span>Toyota RAV4</span></div>
+                <div class="ride-info-line"><strong>Plate</strong><span>BC · SL 4182</span></div>
+                <div class="ride-info-line"><strong>Route</strong><span>Collingwood → Hillcrest Pool</span></div>
+                <div class="ride-info-line"><strong>Time</strong><span>Picked up 8:42 AM · Arrived 9:01 AM</span></div>
+              </div>
+              <div class="ride-card-actions">
+                <button class="mini-action primary" onclick="showScreen('tripSummary')">See summary</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ride-filter-panel" data-filter-page="past" data-filter-type="requested">
+            <div class="ride-log-card">
+              <div class="label-row"><span class="category-label">Requested ride</span><span class="badge">Done</span></div>
+              <h4>Wednesday music lesson</h4>
+              <div class="ride-info-list">
+                <div class="ride-info-line"><strong>Driver</strong><span>Angela Rivera</span></div>
+                <div class="ride-info-line"><strong>Phone</strong><span>+1 604 555 0101</span></div>
+                <div class="ride-info-line"><strong>Car</strong><span>Honda CR-V</span></div>
+                <div class="ride-info-line"><strong>Plate</strong><span>BC · AR 2487</span></div>
+                <div class="ride-info-line"><strong>Route</strong><span>School → Main Street Music</span></div>
+                <div class="ride-info-line"><strong>Time</strong><span>Picked up 4:28 PM · Arrived 4:46 PM</span></div>
+              </div>
+              <div class="ride-card-actions">
+                <button class="mini-action primary" onclick="showScreen('receipt')">See receipt</button>
+              </div>
+            </div>
+            <div class="ride-log-card">
+              <div class="label-row"><span class="category-label">Requested ride</span><span class="badge">Done</span></div>
+              <h4>Tuesday library club</h4>
+              <div class="ride-info-list">
+                <div class="ride-info-line"><strong>Driver</strong><span>Marcus Lee</span></div>
+                <div class="ride-info-line"><strong>Phone</strong><span>+1 604 555 0138</span></div>
+                <div class="ride-info-line"><strong>Car</strong><span>Subaru Outback</span></div>
+                <div class="ride-info-line"><strong>Plate</strong><span>BC · ML 8821</span></div>
+                <div class="ride-info-line"><strong>Route</strong><span>School → Renfrew Library</span></div>
+                <div class="ride-info-line"><strong>Time</strong><span>Picked up 3:18 PM · Arrived 3:35 PM</span></div>
+              </div>
+              <div class="ride-card-actions">
+                <button class="mini-action primary" onclick="showScreen('receipt')">See receipt</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <button class="nav-btn" onclick="showScreen('dashboard')">Home</button><button class="nav-btn active" onclick="showScreen('rides')">Rides</button><button class="nav-btn" onclick="showScreen('safety')">Safety</button><button class="nav-btn" onclick="showScreen('scorecard')">Score</button>
+        </div>
+      </div>
+
+      <!-- OPEN RIDE -->
+      <div class="screen" id="openRide">
+        <div class="status-bar"><span>3:22</span><div class="status-icons"><span>5G</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('dashboard')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>Ride Request</span></div>
+          <div class="avatar">NT</div>
+        </div>
+        <div class="content">
+          <h2 class="page-title">Friday art club</h2>
+          <p class="subtext">Waiting for a trusted parent to claim this ride.</p>
+          <div class="ride-detail-card">
+            <div class="driver-row">
+              <div class="driver-circle" style="background:#f1f3f8;color:#6b7280">?</div>
+              <div><h3>No driver yet</h3><p>Circle members can claim this request.</p></div>
+            </div>
+            <div class="safe-list">
+              <div class="safe-item"><span class="dot-check">✓</span><span>Visible only to verified parents in this circle</span></div>
+              <div class="safe-item"><span class="dot-check">✓</span><span>Pickup note shared after driver claim</span></div>
+              <div class="safe-item"><span class="dot-check">✓</span><span>Parent can cancel before driver accepts</span></div>
+            </div>
+          </div>
+          <button class="btn btn-secondary" onclick="showScreen('dashboard')">Back to dashboard</button>
+        </div>
+      </div>
+
+      <!-- RIDE LIVE -->
+      <div class="screen" id="ride">
+        <div class="status-bar"><span>3:44</span><div class="status-icons"><span>5G</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('rides')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>Thursday Ride</span></div>
+          <div class="avatar">NT</div>
+        </div>
+        <div class="content">
+          <div class="map-card">
+            <div class="route-line"></div>
+            <div class="map-pin pin-start"></div>
+            <div class="map-pin pin-end"></div>
+            <div class="car-dot">CAR</div>
+          </div>
+
+          <div class="ride-detail-card">
+            <div class="driver-row">
+              <div class="driver-circle green">AR<div class="rider-dots"><div class="rider-dot">M</div><div class="rider-dot">L</div></div></div>
+              <div>
+                <h3>Angela Rivera is driving</h3>
+                <p>Verified parent · ICBC confirmed · 2 riders</p>
+              </div>
+            </div>
+            <div class="safe-list">
+              <div class="safe-item"><span class="dot-check">✓</span><span>Maya was picked up at 3:31 PM</span></div>
+              <div class="safe-item"><span class="dot-check">✓</span><span>Live location active</span></div>
+              <div class="safe-item"><span class="dot-check">✓</span><span>Estimated arrival: 3:52 PM</span></div>
+            </div>
+            <div class="cost-banner rider"><span><strong>You reimburse Angela</strong><span class="cost-sub">6.5 km · fuel + parking, cost share only</span></span><strong class="cost-amt">$4.20</strong></div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-secondary">Call driver</button>
+            <button class="btn btn-secondary">Text driver</button>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <button class="nav-btn" onclick="showScreen('dashboard')">Home</button><button class="nav-btn active" onclick="showScreen('rides')">Rides</button><button class="nav-btn" onclick="showScreen('safety')">Safety</button><button class="nav-btn" onclick="showScreen('scorecard')">Score</button>
+        </div>
+      </div>
+
+      <!-- DRIVER RIDE LIVE -->
+      <div class="screen" id="rideDriver">
+        <div class="status-bar"><span>8:58</span><div class="status-icons"><span>5G</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('rides')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>Saturday Carpool</span></div>
+          <div class="avatar">NT</div>
+        </div>
+        <div class="content">
+          <div class="map-card">
+            <div class="route-line"></div>
+            <div class="map-pin pin-start"></div>
+            <div class="map-pin pin-end"></div>
+            <div class="car-dot">YOU</div>
+          </div>
+
+          <div class="ride-detail-card">
+            <div class="driver-row">
+              <div class="driver-circle">NT<div class="rider-dots"><div class="rider-dot">M</div><div class="rider-dot">L</div></div></div>
+              <div>
+                <h3>You are driving</h3>
+                <p>Toyota RAV4 · BC · SL 4182 · 2 riders assigned</p>
+              </div>
+            </div>
+
+            <h3 style="margin:18px 0 8px">Pickup order</h3>
+            <div class="pickup-order-list" id="pickupOrderList">
+              <div class="pickup-step-card active" data-step="1">
+                <div class="pickup-num">1</div>
+                <div>
+                  <h4>Maya Thompson</h4>
+                  <p>Joyce Elementary · Blue backpack · ETA 9:03 AM</p>
+                  <div class="pickup-actions">
+                    <button class="mini-action">Call parent</button>
+                    <button class="mini-action">Text parent</button>
+                    <button class="mini-action primary" onclick="markPickedUp(1)">Picked-up</button>
+                  </div>
+                </div>
+              </div>
+              <div class="pickup-step-card" data-step="2">
+                <div class="pickup-num">2</div>
+                <div>
+                  <h4>Leo Chen</h4>
+                  <p>Kingsway & Rupert · Red hoodie · ETA 9:10 AM</p>
+                  <div class="pickup-actions">
+                    <button class="mini-action">Call parent</button>
+                    <button class="mini-action">Text parent</button>
+                    <button class="mini-action primary" onclick="markPickedUp(2)">Picked-up</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="destination-card" id="destinationProgress">
+              <strong>Destination</strong>
+              <span>Killarney Field · Estimated arrival 9:20 AM</span>
+            </div>
+            <div class="cost-banner driver"><span><strong>You are reimbursed</strong><span class="cost-sub">9.2 km · fuel + parking, split across 2 riders</span></span><strong class="cost-amt">+$5.80</strong></div>
+          </div>
+
+          <button class="btn btn-primary" style="margin-top:12px" onclick="showScreen('tripSummary')">End trip</button>
+        </div>
+        <div class="bottom-nav">
+          <button class="nav-btn" onclick="showScreen('dashboard')">Home</button><button class="nav-btn active" onclick="showScreen('rides')">Rides</button><button class="nav-btn" onclick="showScreen('safety')">Safety</button><button class="nav-btn" onclick="showScreen('scorecard')">Score</button>
+        </div>
+      </div>
+
+      <!-- TRIP SUMMARY -->
+      <div class="screen" id="tripSummary">
+        <div class="status-bar"><span>9:24</span><div class="status-icons"><span>5G</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('rideDriver')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>Trip summary</span></div>
+          <div class="avatar">NT</div>
+        </div>
+        <div class="content">
+          <h2 class="page-title">Saturday carpool complete</h2>
+          <p class="subtext">Review the trip before finishing. This will move the ride into your offered past rides.</p>
+
+          <div class="card">
+            <span class="badge">Driver summary</span>
+            <div class="summary-metric-grid">
+              <div class="summary-metric"><strong>2</strong><span>Children delivered</span></div>
+              <div class="summary-metric"><strong>25 min</strong><span>8:55 AM – 9:20 AM</span></div>
+              <div class="summary-metric"><strong>12.8 km</strong><span>Total distance</span></div>
+              <div class="summary-metric"><strong>$8.06</strong><span>Gas reimbursement</span></div>
+            </div>
+            <div class="route-summary-box">
+              <strong>Route overview</strong>
+              <span>Joyce Elementary → Kingsway & Rupert → Killarney Field</span>
+              <span>Picked up Maya Thompson, then Leo Chen. Both delivered safely.</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin:0 0 8px">Reimbursement</h3>
+            <div class="reimbursement-note"><strong>Gas rule:</strong> total distance is reimbursed at <strong>$0.63/km</strong>. Parking can be added manually before finishing.</div>
+            <div class="receipt-row"><span>Total distance<span class="receipt-subline">Driver route distance</span></span><span>12.8 km</span></div>
+            <div class="receipt-row"><span>Gas reimbursement<span class="receipt-subline">12.8 km × $0.63/km</span></span><span>$8.06</span></div>
+            <label style="margin-top:12px">Parking fee</label>
+            <input id="parkingFeeInput" value="$2.00" oninput="updateReimbursement()" />
+            <div class="receipt-row total-row"><strong>Total reimbursement</strong><strong id="totalReimbursement">$10.06</strong></div>
+          </div>
+
+          <button class="btn btn-primary" onclick="goToPastOfferedRides()">Finish</button>
+        </div>
+      </div>
+
+      <!-- RECEIPT -->
+      <div class="screen" id="receipt">
+        <div class="status-bar"><span>4:03</span><div class="status-icons"><span>5G</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('ride')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>Trip complete</span></div>
+          <div class="avatar">NT</div>
+        </div>
+        <div class="content">
+          <h2 class="page-title">Maya arrived safely</h2>
+          <p class="subtext">Angela marked the ride complete at 3:57 PM.</p>
+          <div class="card">
+            <span class="badge">Safe arrival confirmed</span>
+            <div class="safe-list">
+              <div class="safe-item"><span class="dot-check">✓</span><span>Pickup: Joyce Elementary</span></div>
+              <div class="safe-item"><span class="dot-check">✓</span><span>Drop-off: Trout Lake Soccer Field</span></div>
+              <div class="safe-item"><span class="dot-check">✓</span><span>Angela and Nia both confirmed completion</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="margin:0 0 8px">Ride receipt</h3>
+            <div class="fare-note"><strong>Cost-share rule:</strong> ride distance is split at <strong>$0.63/km</strong> for fuel and parking, shared equally between all riders. Not a fare.</div>
+            <div class="receipt-row"><span>Route distance<span class="receipt-subline">Joyce Elementary → Trout Lake Field</span></span><span>6.7 km</span></div>
+            <div class="receipt-row"><span>Fuel cost share<span class="receipt-subline">6.7 km × $0.63/km</span></span><span>$4.22</span></div>
+            <div class="receipt-row"><span>Your share<span class="receipt-subline">$4.22 split between 2 riders</span></span><span>$2.11</span></div>
+            <div class="receipt-row"><span>Parking share<span class="receipt-subline">$1.50 split between 2 riders</span></span><span>$0.75</span></div>
+            <div class="receipt-row"><strong>Total cost share</strong><strong>$2.86</strong></div>
+          </div>
+          <div class="card">
+            <h3 style="margin:0 0 8px">Contribution updated</h3>
+            <p class="subtext" style="margin:0">Your request was logged. Offer a future ride to keep your score balanced.</p>
+            <div class="progress-wrap">
+              <div class="progress-label"><span>Monthly balance</span><span>72%</span></div>
+              <div class="progress"><div></div></div>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="showScreen('dashboard')">Back to dashboard</button>
+        </div>
+      </div>
+
+      <!-- SCORECARD -->
+      <div class="screen" id="scorecard">
+        <div class="status-bar"><span>4:07</span><div class="status-icons"><span>5G</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <button class="x-btn" onclick="showScreen('dashboard')">‹</button>
+          <div class="brand"><div class="logo">SL</div><span>Scorecard</span></div>
+          <div class="avatar">NT</div>
+        </div>
+        <div class="content">
+          <h2 class="page-title">Monthly Scorecard</h2>
+          <p class="subtext">Contribution tracking reduces the guilt of asking the same parents repeatedly.</p>
+          <div class="card">
+            <div class="badge-hero-card">
+              <div class="badge-medal">🏆</div>
+              <div class="badge-copy">
+                <h3>Reliable Helper</h3>
+                <p>You earned this contribution badge for balanced participation in your circle.</p>
+              </div>
+              <span class="badge">Active</span>
+            </div>
+          </div>
+          <div class="section-head-row" style="margin-top:4px"><h3>Contribution records</h3><button class="mini-link" onclick="openModal('badgesModal')">See all badges</button></div>
+          <div class="card">
+            <div class="receipt-row"><span>Rides requested</span><strong>2</strong></div>
+            <div class="receipt-row"><span>Rides offered</span><strong>3</strong></div>
+            <div class="receipt-row"><span>Children helped</span><strong>5</strong></div>
+            <div class="receipt-row"><span>Late cancellations</span><strong>0</strong></div>
+          </div>
+          <button class="btn btn-primary" onclick="showScreen('dashboard')">Back to dashboard</button>
+        </div>
+      </div>
+
+      <!-- SAFETY -->
+      <div class="screen" id="safety">
+        <div class="status-bar"><span>4:12</span><div class="status-icons"><span>5G</span><span class="pill-icon"></span></div></div>
+        <div class="app-header">
+          <div class="brand"><div class="logo">SL</div><span>Safety</span></div>
+          <button class="avatar" onclick="openProfileDrawer()" aria-label="Open profile">NT</button>
+        </div>
+        <div class="content" style="padding-bottom:112px">
+          <h2 class="page-title">Safety rules & guidelines</h2>
+          <p class="subtext">Review the core rules that keep children, parents, and rides safe inside SafeLoop.</p>
+
+          <div class="card rules-card">
+            <h3>Verified parents only</h3>
+            <div class="safe-list">
+              <div class="safe-item"><span class="dot-check">✓</span><span>Only verified parents can request, offer, or claim rides.</span></div>
+              <div class="safe-item"><span class="dot-check">✓</span><span>Driver licence, insurance, and payment details must remain active.</span></div>
+            </div>
+          </div>
+
+          <div class="card rules-card">
+            <h3>Pickup and drop-off rules</h3>
+            <div class="safe-list">
+              <div class="safe-item"><span class="dot-check">✓</span><span>Always confirm the child identity, pickup note, and destination before departure.</span></div>
+              <div class="safe-item"><span class="dot-check">✓</span><span>Children should only be released to the assigned verified driver.</span></div>
+            </div>
+          </div>
+
+          <div class="card rules-card">
+            <h3>During the ride</h3>
+            <div class="safe-list">
+              <div class="safe-item"><span class="dot-check">✓</span><span>Use seatbelts and follow BC child safety and booster seat requirements.</span></div>
+              <div class="safe-item"><span class="dot-check">✓</span><span>Keep live tracking on whenever a ride is active.</span></div>
+              <div class="safe-item"><span class="dot-check">✓</span><span>Contact the parent immediately if pickup timing or route changes.</span></div>
+            </div>
+          </div>
+
+          <div class="card rules-card">
+            <h3>Cancellations and emergencies</h3>
+            <div class="safe-list">
+              <div class="safe-item"><span class="dot-check">✓</span><span>Cancel as early as possible so the circle has time to reassign the ride.</span></div>
+              <div class="safe-item"><span class="dot-check">✓</span><span>If an emergency happens, use the parent contact tools first, then call local emergency services if needed.</span></div>
+            </div>
+          </div>
+
+          <div class="contact-strip">
+            <div>
+              <strong>Need more information?</strong>
+              <span>Contact SafeLoop Support at support@safeloop.ca or call 1-800-555-LOOP.</span>
+            </div>
+            <button class="mini-upload-btn" type="button">Contact</button>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <button class="nav-btn" onclick="showScreen('dashboard')">Home</button><button class="nav-btn" onclick="showScreen('rides')">Rides</button><button class="nav-btn active">Safety</button><button class="nav-btn" onclick="showScreen('scorecard')">Score</button>
+        </div>
+      </div>
+    </section>
+
+    
+  </main>
+
+  <script>
+    function showScreen(id, btn) {
+      document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) target.classList.add('active');
+      document.querySelectorAll('.modal-backdrop').forEach(modal => modal.classList.remove('visible'));
+      const drawer = document.getElementById('profileDrawer');
+      if (drawer) drawer.classList.remove('visible');
+      if (target) target.scrollTo({ top: 0, behavior: 'smooth' });
+
+      document.querySelectorAll('.prototype-toolbar .small-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      else {
+        const shortcut = Array.from(document.querySelectorAll('.prototype-toolbar .small-btn')).find(b => b.textContent.trim().toLowerCase().includes(id.replace('buildCircle','onboarding').replace('openRide','ride')));
+        if (shortcut) shortcut.classList.add('active');
+      }
+    }
+
+    const TODAY = new Date(2026, 6, 3); // July 3, 2026 for prototype consistency
+
+    const calendarEvents = {
+      '2026-07-06': { type: 'practice', label: '3:00' },
+      '2026-07-08': { type: 'practice', label: '4:00' },
+      '2026-07-09': { type: 'practice', label: '3:30' },
+      '2026-07-10': { type: 'practice', label: '4:15' },
+      '2026-07-11': { type: 'practice', label: '9:00' },
+      '2026-07-17': { type: 'practice', label: '4:15' },
+      '2026-07-24': { type: 'holiday', label: '' }
+    };
+
+    function toggleCircleAccordion(button) {
+      const item = button.closest('.accordion-item');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.accordion-item').forEach(section => {
+        section.classList.remove('open');
+        const icon = section.querySelector('.accordion-trigger b');
+        if (icon) icon.textContent = '+';
+      });
+      if (!isOpen) {
+        item.classList.add('open');
+        const icon = item.querySelector('.accordion-trigger b');
+        if (icon) icon.textContent = '−';
+      }
+    }
+
+    function toISODate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatDateLabel(iso) {
+      const [year, month, day] = iso.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      return date.toLocaleDateString('en-CA', {
+        weekday: 'long', month: 'short', day: 'numeric', year: 'numeric'
+      });
+    }
+
+    function renderCalendar(calendar) {
+      const selected = calendar.dataset.selected || toISODate(TODAY);
+      const selectedDate = new Date(selected + 'T12:00:00');
+      const year = Number(calendar.dataset.year || selectedDate.getFullYear());
+      const month = Number(calendar.dataset.month || selectedDate.getMonth());
+      calendar.dataset.year = String(year);
+      calendar.dataset.month = String(month);
+
+      const title = calendar.querySelector('[data-cal-title]');
+      if (title) {
+        title.textContent = new Date(year, month, 1).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
+      }
+
+      const grid = calendar.querySelector('[data-cal-grid]');
+      if (!grid) return;
+      const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      grid.innerHTML = dayNames.map(day => `<div class="calendar-day-name">${day}</div>`).join('');
+
+      const first = new Date(year, month, 1);
+      const startDay = first.getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const prevDays = new Date(year, month, 0).getDate();
+      const cells = Math.ceil((startDay + daysInMonth) / 7) * 7;
+
+      for (let i = 0; i < cells; i++) {
+        const dayNum = i - startDay + 1;
+        const cellDate = new Date(year, month, dayNum);
+        const isMuted = dayNum < 1 || dayNum > daysInMonth;
+        const displayDay = isMuted ? (dayNum < 1 ? prevDays + dayNum : dayNum - daysInMonth) : dayNum;
+        const iso = toISODate(cellDate);
+        const event = calendarEvents[iso];
+        let cls = 'calendar-cell';
+        if (isMuted) cls += ' muted';
+        if (event?.type) cls += ` ${event.type}`;
+        if (iso === selected) cls += ' selected';
+        if (iso === toISODate(TODAY)) cls += ' today';
+        grid.innerHTML += `<button type="button" class="${cls}" data-date="${iso}" onclick="selectCalendarDate(this)">${displayDay}${event?.label ? `<small>${event.label}</small>` : ''}</button>`;
+      }
+    }
+
+    function initializeCalendars() {
+      document.querySelectorAll('[data-calendar]').forEach(calendar => renderCalendar(calendar));
+    }
+
+    function changeCalendarMonth(button, delta) {
+      const calendar = button.closest('[data-calendar]');
+      const month = Number(calendar.dataset.month || 6) + delta;
+      const year = Number(calendar.dataset.year || 2026);
+      const next = new Date(year, month, 1);
+      calendar.dataset.year = String(next.getFullYear());
+      calendar.dataset.month = String(next.getMonth());
+      renderCalendar(calendar);
+    }
+
+    function selectCalendarDate(cell) {
+      const calendar = cell.closest('[data-calendar]');
+      const selectedDate = cell.dataset.date;
+      calendar.dataset.selected = selectedDate;
+      renderCalendar(calendar);
+
+      const modal = cell.closest('.modal');
+      if (!modal) return;
+      const label = formatDateLabel(selectedDate);
+      modal.querySelectorAll('[data-selected-date-input]').forEach(input => { input.value = label; });
+      modal.querySelectorAll('[data-selected-date-output]').forEach(output => { output.textContent = label; });
+
+      const pickupInput = modal.querySelector('[data-pickup-time-input]');
+      const event = calendarEvents[selectedDate];
+      if (pickupInput && event?.label) pickupInput.value = event.label.includes(':') ? event.label + ' PM' : event.label;
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) {
+        modal.classList.add('visible');
+        initializeCalendars();
+        updateReimbursement();
+      }
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.remove('visible');
+    }
+
+    function openProfileDrawer() {
+      const drawer = document.getElementById('profileDrawer');
+      const activeScreen = document.querySelector('.screen.active');
+      if (drawer && activeScreen && drawer.parentElement !== activeScreen) activeScreen.appendChild(drawer);
+      if (drawer) drawer.classList.add('visible');
+    }
+
+    function showDrawerTab(panelId, button) {
+      const sidebar = button.closest('.profile-sidebar');
+      sidebar.querySelectorAll('.drawer-tab').forEach(tab => tab.classList.remove('active'));
+      sidebar.querySelectorAll('.drawer-panel').forEach(panel => panel.classList.remove('active'));
+      button.classList.add('active');
+      const panel = document.getElementById(panelId);
+      if (panel) panel.classList.add('active');
+    }
+
+    function filterCircles(value) {
+      const needle = String(value || '').trim().toLowerCase();
+      document.querySelectorAll('.circle-accordion .accordion-item').forEach(item => {
+        const haystack = (item.dataset.circle || item.textContent || '').toLowerCase();
+        item.style.display = !needle || haystack.includes(needle) ? '' : 'none';
+      });
+    }
+
+    let childCounter = 0;
+
+    function addChildCard(name, age, note) {
+      const list = document.getElementById('signupChildList');
+      if (!list) return;
+      const exists = Array.from(list.querySelectorAll('strong')).some(item => item.textContent.trim() === `${name}, ${age}`);
+      if (exists) return;
+      const card = document.createElement('div');
+      card.className = 'child-added-card';
+      card.innerHTML = `<div><strong>${name}, ${age}</strong><span>${note}</span></div><span class="badge">Added</span><button class="child-delete-btn" type="button" aria-label="Remove ${name}" onclick="this.parentElement.remove()">×</button>`;
+      list.appendChild(card);
+    }
+
+    function saveSignupChild() {
+      const nameInput = document.querySelector('#signupChild input');
+      const ageInput = document.querySelector('#signupChild .field-grid input');
+      const name = nameInput ? nameInput.value.trim() || 'Maya Thompson' : 'Maya Thompson';
+      const age = ageInput ? ageInput.value.trim() || '8' : '8';
+      addChildCard(name.split(' ')[0] || name, age, 'Ready to add to trusted ride requests');
+    }
+
+    function addMoreChild() {
+      childCounter += 1;
+      const samples = [
+        { name: 'Leo', age: '7', note: 'Second child ready for trusted rides' },
+        { name: 'Ava', age: '9', note: 'Added to child profiles' },
+        { name: 'Noah', age: '6', note: 'Added to child profiles' }
+      ];
+      const child = samples[(childCounter - 1) % samples.length];
+      addChildCard(child.name, child.age, child.note);
+    }
+
+    function togglePrivateCircle(isPrivate) {
+      const field = document.getElementById('privatePasswordField');
+      if (field) field.classList.toggle('hidden', !isPrivate);
+    }
+
+    function addInviteNumber(number, name) {
+      const input = document.getElementById('invitePhoneInput');
+      const phone = number || (input ? input.value.trim() : '');
+      if (!phone) return;
+      const label = name || 'New parent';
+      const list = document.getElementById('contactList');
+      if (!list) return;
+      const item = document.createElement('div');
+      item.className = 'contact-chip';
+      item.innerHTML = `<div><strong>${label}</strong><span>${phone} · Added manually</span></div><button type="button" onclick="this.parentElement.remove()">×</button>`;
+      list.appendChild(item);
+      if (input) input.value = '';
+    }
+
+    function addContactSuggestion() {
+      addInviteNumber('+1 604 555 0167', 'Sarah Park');
+    }
+
+    function closeProfileDrawer(event) {
+      if (event && event.target.id !== 'profileDrawer') return;
+      const drawer = document.getElementById('profileDrawer');
+      if (drawer) drawer.classList.remove('visible');
+    }
+
+    function saveChild() {
+      const preview = document.getElementById('childPreview');
+      if (preview) preview.classList.add('visible');
+      closeModal('childModal');
+    }
+
+    function populateParents() {}
+
+    function submitRideRequest() {
+      closeModal('requestRideModal');
+      openModal('requestSuccessModal');
+    }
+
+    function submitOffer() {
+      closeModal('availabilityModal');
+      closeModal('offerRideModal');
+      openModal('offerSuccessModal');
+    }
+
+    function goToFutureRides() {
+      closeModal('requestSuccessModal');
+      showScreen('futureRides');
+      setTimeout(() => setRideFilter('future', 'requested'), 0);
+    }
+
+    function goToFutureOfferedRides() {
+      closeModal('offerSuccessModal');
+      showScreen('futureRides');
+      setTimeout(() => setRideFilter('future', 'offered'), 0);
+    }
+
+    function goToPastOfferedRides() {
+      showScreen('pastRides');
+      setTimeout(() => setRideFilter('past', 'offered'), 0);
+    }
+
+    function setRideFilter(page, type, button) {
+      document.querySelectorAll(`[data-filter-page="${page}"]`).forEach(panel => {
+        panel.classList.toggle('active', panel.dataset.filterType === type);
+      });
+      const screen = document.getElementById(page === 'future' ? 'futureRides' : 'pastRides');
+      if (screen) {
+        screen.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+        const tabs = Array.from(screen.querySelectorAll('.filter-tab'));
+        const matching = button || tabs.find(tab => tab.textContent.toLowerCase().includes(type));
+        if (matching) matching.classList.add('active');
+      }
+    }
+
+    function markPickedUp(step) {
+      const current = document.querySelector(`.pickup-step-card[data-step="${step}"]`);
+      if (current) {
+        current.classList.remove('active');
+        current.classList.add('done');
+        const num = current.querySelector('.pickup-num');
+        if (num) num.textContent = '✓';
+        const primary = current.querySelector('.mini-action.primary');
+        if (primary) primary.textContent = 'Picked up';
+      }
+
+      const next = document.querySelector(`.pickup-step-card[data-step="${step + 1}"]`);
+      if (next) {
+        next.classList.add('active');
+      } else {
+        const destination = document.getElementById('destinationProgress');
+        if (destination) {
+          destination.innerHTML = '<strong>All children picked up</strong><span>Continue to Killarney Field · Estimated arrival 9:20 AM</span>';
+        }
+      }
+    }
+
+    function joinRecommendedCircle(button) {
+      const card = button.closest('.recommendation-card');
+      const row = document.getElementById('joinFinishRow');
+      const isJoined = card && card.classList.contains('joined');
+
+      if (isJoined) {
+        card.classList.remove('joined');
+        button.textContent = 'Join';
+        button.classList.remove('joined-pill');
+        button.classList.add('mini-upload-btn');
+      } else {
+        if (card) card.classList.add('joined');
+        button.textContent = '✓ Joined';
+        button.classList.add('joined-pill');
+      }
+
+      const anyJoined = !!document.querySelector('.recommendation-card.joined');
+      if (row) row.classList.toggle('hidden', !anyJoined);
+    }
+
+
+    function updateReimbursement() {
+      const base = 12.8 * 0.63;
+      const input = document.getElementById('parkingFeeInput');
+      const output = document.getElementById('totalReimbursement');
+      const parking = input ? Number(String(input.value).replace(/[^0-9.]/g, '')) || 0 : 0;
+      if (output) output.textContent = '$' + (base + parking).toFixed(2);
+    }
+
+    initializeCalendars();
+    updateReimbursement();
+    togglePrivateCircle(true);
+  </script>
+</body>
+</html>
